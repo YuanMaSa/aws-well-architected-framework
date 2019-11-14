@@ -1,6 +1,6 @@
 
 # Prominent data platform design with AWS well-architected framework
-![data_lake.png](/img/data_lake.png)
+![data_lake.jpg](/img/data_lake.jpg)
 
 The passage will elucidate how to combine AWS Well-Architected Framework concept with data platform design
 
