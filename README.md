@@ -86,12 +86,6 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     Drive improvement through lessons learned from all operational events and failures. Share what is learned across teams and through the entire organization.
 
-#### <span style="color:#1E90FF"> Best Practices </span>
-
-* Prepare
-* Operate
-* Evolve
-
 #### <span style="color:#1E90FF"> Key AWS Services </span>
 
 * **Essential**
@@ -141,14 +135,6 @@ Test how your architecture and processes perform by regularly scheduling game da
 * **Prepare for security events**
 
     Prepare for an incident by having an incident management process that aligns to your organizational requirements. Run incident response simulations and use tools with automation to increase your speed for detection, investigation, and recovery
-
-#### <span style="color:#1E90FF"> Best Practices </span>
-
-* Identity and Access Management
-* Detective Controls
-* Infrastructure Protection
-* Data Protection
-* Incident Response
 
 #### <span style="color:#1E90FF"> Key AWS Services </span>
 
@@ -216,12 +202,6 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     Changes to your infrastructure should be done using automation. The changes that need to be managed are changes to the automation.
 
-#### <span style="color:#1E90FF"> Best Practices </span>
-
-* Foundations
-* Change Management
-* Failure Management
-
 #### <span style="color:#1E90FF"> Key AWS Services </span>
 
 ![reliability_key_services.png](/img/reliability_key_services.png)
@@ -267,6 +247,8 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 * **Use serverless architectures**
 
+    ![serverless.png](/img/serverless.png)
+
     In the cloud, serverless architectures remove the need for you to run and maintain servers to carry out traditional compute activities. For example, storage services can act as static websites, removing the need for web servers, and event services can host your code for you. This not only removes the operational burden of managing these servers, but also can lower transactional costs because these managed services operate at cloud scale.
 
 * **Experiment more often**
@@ -276,14 +258,6 @@ Test how your architecture and processes perform by regularly scheduling game da
 * **Mechanical sympathy**
 
     Use the technology approach that aligns best to what you are trying to achieve. For example, consider data access patterns when selecting database or storage approaches.
-
-#### <span style="color:#1E90FF"> Best Practices </span>
-
-* Selection
-* Review
-* Monitoring
-* Tradeoffs
-
 
 #### <span style="color:#1E90FF"> Key AWS Services </span>
 
@@ -315,6 +289,8 @@ Test how your architecture and processes perform by regularly scheduling game da
         * DynamoDB
 
     * **Network**
+
+        ![highly_availability.png](/img/highly_availability.png)
 
         Amazon Route 53 provides latency-based routing. Amazon VPC endpoints and AWS Direct Connect can reduce network distance or jitter.
 
@@ -365,14 +341,6 @@ Test how your architecture and processes perform by regularly scheduling game da
 * **Use managed and application level services to reduce cost of ownership**
 
     In the cloud, managed and application level services remove the operational burden of maintaining servers for tasks such as sending email or managing databases. As managed services operate at cloud scale, they can offer a lower cost per transaction or service.
-
-#### <span style="color:#1E90FF"> Best Practices </span>
-
-* Expenditure Awareness
-* Cost-Effective Resources
-* Matching supply and demand
-* Optimizing Over Time
-
 
 #### <span style="color:#1E90FF"> Key AWS Services </span>
 
