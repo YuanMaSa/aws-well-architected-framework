@@ -10,7 +10,7 @@ The passage will elucidate how to combine AWS Well-Architected Framework concept
 
 Building an application is not difficult
 
-![sdlc.png](/img/sdlc.png)
+![sdlc.jpg](/img/sdlc.jpg)
 
 When you reviewing the system, can you answer the question: **"Are you Well-Architected?"**
 
