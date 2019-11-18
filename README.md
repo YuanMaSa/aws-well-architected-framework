@@ -151,6 +151,9 @@ Test how your architecture and processes perform by regularly scheduling game da
 * Incident Response
 
 #### <span style="color:#1E90FF"> Key AWS Services </span>
+
+![security_key_services.png](/img/security_key_services.png)
+
 * **Data Protection**
     
     Services such as ELB, Amazon Elastic Block Store (Amazon EBS), Amazon S3, and Amazon Relational Database Service (Amazon RDS) include encryption capabilities to protect your data in transit and at rest. Amazon Macie automatically discovers, classifies and protects sensitive data, while AWS Key Management Service (AWS KMS) makes it easy for you to create and control keys used for encryption.
@@ -220,6 +223,9 @@ Test how your architecture and processes perform by regularly scheduling game da
 * Failure Management
 
 #### <span style="color:#1E90FF"> Key AWS Services </span>
+
+![reliability_key_services.png](/img/reliability_key_services.png)
+
 * **Foundations**
 
     AWS IAM enables you to securely control access to AWS services and resources. Amazon VPC lets you provision a private, isolated section of the AWS Cloud where you can launch AWS resources in a virtual network. AWS Trusted Advisor provides visibility into service limits. AWS Shield is a managed Distributed Denial of Service (DDoS) protection service that safeguards web applications running on AWS.
@@ -280,6 +286,9 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 
 #### <span style="color:#1E90FF"> Key AWS Services </span>
+
+![performance_efficiency_key_services.png](/img/performance_efficiency_key_services.png)
+
 * **Selection**
     * **Compute** 
     
@@ -288,6 +297,8 @@ Test how your architecture and processes perform by regularly scheduling game da
         * Amazon Auto Scaling
 
     * **Storage**
+
+        ![storage_comparison.png](/img/storage_comparison.png)
     
         Amazon EBS provides a wide range of storage options (such as SSD and provisioned input/output operations per second (PIOPS)) that allow you to optimize for your use case. Amazon S3 provides serverless content delivery, and Amazon S3 transfer acceleration enables fast, easy, and secure transfers of files over long distances.
 
@@ -295,6 +306,8 @@ Test how your architecture and processes perform by regularly scheduling game da
         * EBS
 
     * **Database**
+
+        ![database_comparison.png](/img/database_comparison.png)
 
         Amazon RDS provides a wide range of database features (such as PIOPS and read replicas) that allow you to optimize for your use case. Amazon DynamoDB provides single-digit millisecond latency at any scale.
 
@@ -362,6 +375,8 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 
 #### <span style="color:#1E90FF"> Key AWS Services </span>
+
+![cost_optimization_key_services.png](/img/cost_optimization_key_services.png)
 
 * **Expenditure Awareness**
 
