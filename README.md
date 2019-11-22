@@ -1,5 +1,7 @@
 
 # Prominent data platform design with AWS well-architected framework
+
+
 ![data_lake.jpg](/img/data_lake.jpg)
 
 The passage will elucidate how to combine AWS Well-Architected Framework concept with data platform design
@@ -89,7 +91,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 #### <span style="color:#1E90FF"> Key AWS Services </span>
 
 * **Essential**
-    * CloudFormation
+    * [CloudFormation](https://aws.amazon.com/tw/cloudformation/)
         * enables you to provision resources in an orderly and consistent fashion from your development through production environments
 
 * **Prepare**
@@ -117,6 +119,8 @@ Test how your architecture and processes perform by regularly scheduling game da
     Monitor, alert, and audit actions and changes to your environment in real time. Integrate logs and metrics with systems to automatically respond and take action.
 
 * **Apply security at all layers**
+
+    ![vpc.png](/img/vpc.png)
 
     Rather than just focusing on protection of a single outer layer, apply a defense-in-depth approach with other security controls. Apply to all layers (e.g., edge network, VPC, subnet, load balancer, every instance, operating system, and application).
 
@@ -376,8 +380,95 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 ## Real scenario and case study
 
+#### <span style="color:#1E90FF"> Case 1 - Retailing Company </span>
+
+**The goal of the client**
+
+* To enhance the performance for data processing
+* Aggregate the data among all the stores and gain insights into the sales
+* Automate the data pipeline
+
+**Project content**
+
+End-to-end Extract, Load and Transform (ELT) design and implementation of sales transaction data which generate transformed table for Tableau dashboard to use in daily basis
+
+**Difficulties and Tricky stuff**
+* Massive data cleansing job
+* A large scale of data aggregation
+* Unfathomable business logic
+* Indispensable data validation and error handling
+* Performance Tuning
 
 
+**Network Diagram**
+
+![client1-Diagram-simple_network.png](/img/client1-Diagram-simple_network.png)
+
+**Whether follow the well-architected concept**
+* Data can only transfer on AWS? No traffic out of VPC?
+* No security issues?
+
+**Original Architecture Diagram**
+
+![client1-Diagram-origin.png](/img/client1-Diagram-origin.png)
+
+**Weaken**
+* Cron schedule and cleansing job may fail due to the downtime of EC2?
+* Why do we need Glue job to request Redshift to run queries? (No Spark application in our script)
+* 40 node$$$ Red$hift cost a lot and run our ELT task only for 2 hours
+
+![redshift_cost.png](/img/redshift_cost.png)
+
+**How about this one**
+
+![client1-Diagram-optimized.png](/img/client1-Diagram-optimized.png)
+
+
+* Use CloudWatch event schedule trigger EC2 and setup some failover logic to launch another instance to run the job when EC2 is failed (HA)
+* We can use Step Function or Lambda to handle the query task more easily
+* We can use EMR (equipped with parallel computing power as well) to transform the data instead of Redshift
+* To handle large scale of data aggregation, Spark can take lots of advantages
+
+#### <span style="color:#1E90FF"> Case 2 -  E-commerce Company </span>
+
+**The goal of the client**
+
+* Aims to track the whole customers’ journey from how they entered the sourcing website, the items they consider and request quotations to finally they exit the website
+* High performance on historical data analytics leads decision-makers to take less time to do more accurate strategies
+
+**Project content**
+
+End to end stream processing and Extract, Transform and Load (ETL) design and implementation of clickstream data transaction which generate transformed table for Tableau dashboard to use in daily basis
+
+**Difficulties and Tricky stuff**
+* Nested JSON with a complex format
+* Need to process large historical data and combine with the latest data
+* Performance Tuning
+
+**Original Architecture Diagram**
+
+![client2-Diagram-original.png](/img/client2-Diagram-original.png)
+
+**Weaken**
+* EC2 will run out of the memory because of Nested JSON processing (poor performance)?
+* Whether the raw data bucket is useless in the workflow?
+* Why do we need Glue job to request Redshift to run queries? (No Spark application in our script)
+
+**After performance tunning**
+
+![client2-Diagram-optimized.png](/img/client2-Diagram-optimized.png)
+
+* 
+* 
+* 
+
+**How about this one**
+
+![client2-Diagram-best-way.png](/img/client2-Diagram-best-way.png)
+
+* 
+* 
+* 
 
 
 ## Summary
@@ -390,3 +481,22 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 
     {"CloudFormation": "Infrastructure as code"}
+
+
+## References
+* [AWS Well-Architected Framework Whitepaper](https://d1.awsstatic.com/whitepapers/architecture/AWS_Well-Architected_Framework.pdf)
+* [Big Data Analytics Options on AWS](https://d1.awsstatic.com/whitepapers/Big_Data_Analytics_Options_on_AWS.pdf)
+## Team
+This lab is brought to you by [eCloudvalley Data team](https://www.ecloudvalley.com)
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1 @@
+https://aws.amazon.com/tw/blogs/big-data/automate-amazon-redshift-cluster-creation-using-aws-cloudformation/?sc_channel=sm&sc_campaign=Data_Lakes_Big_Data&sc_publisher=LINKEDIN&sc_country=Global&sc_geo=GLOBAL&sc_outcome=awareness&trk=pac_q3-19_datalakes_soc_LINKEDIN&linkId=73364544
