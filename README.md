@@ -62,7 +62,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 ***
 ### <span style="color:#E63F00"> <em>Operational Excellence</em> </span>
 
-#### <span style="color:#1E90FF"> Design Principals </span>
+#### <span style="color:#007697"> Design Principals </span>
 
 * **Perform operations as code**
 
@@ -88,7 +88,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     Drive improvement through lessons learned from all operational events and failures. Share what is learned across teams and through the entire organization.
 
-#### <span style="color:#1E90FF"> Key AWS Services </span>
+#### <span style="color:#007697"> Key AWS Services </span>
 
 * **Essential**
     * [CloudFormation](https://aws.amazon.com/tw/cloudformation/)
@@ -108,7 +108,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 ***
 ### <span style="color:#E63F00"> <em>Security</em> </span>
 
-#### <span style="color:#1E90FF"> Design Principals </span>
+#### <span style="color:#007697"> Design Principals </span>
 
 * **Implement a strong identity foundation**
 
@@ -140,7 +140,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     Prepare for an incident by having an incident management process that aligns to your organizational requirements. Run incident response simulations and use tools with automation to increase your speed for detection, investigation, and recovery
 
-#### <span style="color:#1E90FF"> Key AWS Services </span>
+#### <span style="color:#007697"> Key AWS Services </span>
 
 ![security_key_services.png](/img/security_key_services.png)
 
@@ -184,7 +184,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 ***
 ### <span style="color:#E63F00"> <em>Reliability</em> </span>
 
-#### <span style="color:#1E90FF"> Design Principals </span>
+#### <span style="color:#007697"> Design Principals </span>
 
 * **Test recovery procedures**
 
@@ -206,7 +206,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     Changes to your infrastructure should be done using automation. The changes that need to be managed are changes to the automation.
 
-#### <span style="color:#1E90FF"> Key AWS Services </span>
+#### <span style="color:#007697"> Key AWS Services </span>
 
 ![reliability_key_services.png](/img/reliability_key_services.png)
 
@@ -239,7 +239,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 ***
 ### <span style="color:#E63F00"> <em>Performance Efficiency</em> </span>
 
-#### <span style="color:#1E90FF"> Design Principals </span>
+#### <span style="color:#007697"> Design Principals </span>
 
 * **Democratize advanced technologies**
 
@@ -263,7 +263,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     Use the technology approach that aligns best to what you are trying to achieve. For example, consider data access patterns when selecting database or storage approaches.
 
-#### <span style="color:#1E90FF"> Key AWS Services </span>
+#### <span style="color:#007697"> Key AWS Services </span>
 
 ![performance_efficiency_key_services.png](/img/performance_efficiency_key_services.png)
 
@@ -324,7 +324,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 ### <span style="color:#E63F00"> <em>Cost Optimization</em> </span>
 
 
-#### <span style="color:#1E90FF"> Design Principals </span>
+#### <span style="color:#007697"> Design Principals </span>
 
 * **Adopt a consumption model**
 
@@ -346,7 +346,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     In the cloud, managed and application level services remove the operational burden of maintaining servers for tasks such as sending email or managing databases. As managed services operate at cloud scale, they can offer a lower cost per transaction or service.
 
-#### <span style="color:#1E90FF"> Key AWS Services </span>
+#### <span style="color:#007697"> Key AWS Services </span>
 
 ![cost_optimization_key_services.png](/img/cost_optimization_key_services.png)
 
@@ -375,12 +375,298 @@ Test how your architecture and processes perform by regularly scheduling game da
 ***
 ## Take well-architected concept into the data platform design
 
+Nowadays an advanced data platform required a myriad of functionalities
 
 
+![data_architecture.png](/img/data_architecture.png)
+
+To build a scalable data platform, AWS is a panacea for most companies. However, it is imperative to take the well-architected concept into the data application
+
+![architecture_aws_v05.png](/img/architecture_aws_v05.png)
+
+This section will introduce the AWS big data services and elucidate the best practice of each service. The services including Kinesis, Lambda, EMR, Glue, DynamoDB, Redshift, Elastisearch and Athena
+
+***
+### <span style="color:#007697"> Amazon Kinesis </span>
+
+ ![kinesis_firehose.png](/img/kinesis_firehose.png)
+
+ ![kinesis_stream.png](/img/kinesis_stream.png)
+
+* **Ideal Usage Patterns**
+    * Real-time data analytics
+    * Log and data feed intake and processing 
+    * Real-time metrics and reporting 
+
+* Cost Model
+    * Amazon Kinesis Data Streams has simple pay-as-you-go pricing, with no upfront costs or minimum fees, and you only pay for the resources you consume. An Amazon Kinesis stream is made up of one or more shards, each shard gives you a capacity 5 read transactions per second, up to a maximum total of 2 MB of data read per second.
+
+* Performance
+    * Amazon Kinesis Data Streams allows you to choose throughput capacity you require in terms of shards. With each shard in an Amazon Kinesis stream, you can capture up to 1 megabyte per second of data at 1,000 write transactions per second.
+
+* Durability and Availability
+    * Amazon Kinesis Data Streams synchronously replicates data across three Availability Zones in an AWS Region, providing high availability and data durability.
+
+* Scalability and Elasticity
+    * You can increase or decrease the capacity of the stream at any time according to your business or operational needs, without any interruption to ongoing stream processing.
+
+* **Anti-Patterns**
+    * Small scale consistent throughput
+    * Long-term data storage and analytics
+
+
+***
+### <span style="color:#007697"> AWS Lambda </span>
+
+![lambda.png](/img/lambda.png)
+
+* **Ideal Usage Patterns**
+    * Real-time File Processing
+    * Real-time Stream Processing
+    * Extract, Transform, Load
+    * Replace Cron (Use schedule expressions to run a Lambda function)
+    * Process AWS Events (Event handler)
+
+* Cost Model
+    * With AWS Lambda you only pay for what you use. You are charged $0.20 per 1 million requests thereafter ($0.0000002 per request). 
+
+* Performance
+    *  Lambda is designed to process events within milliseconds. Latency will be higher immediately after a Lambda function is created, updated, or if it has not been used recently. 
+
+* Durability and Availability
+    * AWS Lambda is designed to use replication and redundancy to provide high availability for both the service itself and for the Lambda functions it operates. On failure, Lambda functions being invoked synchronously respond with an exception. Lambda functions being invoked asynchronously are retried at least 3 times, after which the event may be rejected.
+
+* Scalability and Elasticity
+    * There is no limit on the number of Lambda functions that you can run. However, Lambda has a default safety throttle of 1,000 concurrent executions per account per region
+
+* **Anti-Patterns**
+    * Long Running Applications
+    * Dynamic Websites
+    * Stateful Applications
+
+***
+### <span style="color:#007697"> Amazon EMR </span>
+
+![emr.png](/img/emr.png)
+
+* **Ideal Usage Patterns**
+
+    Amazon EMR’s flexible framework reduces large processing problems and data sets into smaller jobs and distributes them across many compute nodes in a Hadoop cluster. This capability lends itself to many usage patterns with big data analytics. Here are a few examples:
+    * Large extract, transform, and load (ETL) data movement
+    * Log processing and analytics
+    * Risk modeling and threat analytics
+    * Ad targeting and click stream analytics
+    * Predictive analytics
+
+* Cost Model
+    * Amazon EMR supports a variety of Amazon EC2 instance types (standard, high CPU, high memory, high I/O, and so on) and all Amazon EC2 pricing options (On-Demand, Reserved, and Spot).
+
+* Performance
+    * Amazon EMR performance is driven by the type of EC2 instances you choose to run your cluster on and how many you chose to run your analytics. You should choose an instance type suitable for your processing requirements, with sufficient memory, storage, and processing power.
+
+* Durability and Availability
+    * By default, Amazon EMR is fault tolerant for core node failures and continues job execution if a slave node goes down. Amazon EMR will also provision a new node when a core node fails. However, Amazon EMR will not replace nodes if all nodes in the cluster are lost. Customers can monitor the health of nodes and replace failed nodes with CloudWatch.
+
+* Scalability and Elasticity
+    * With Amazon EMR, it is easy to resize a running cluster. You can add core nodes which hold the Hadoop Distributed File System (HDFS) at any time to increase your processing power and increase the HDFS storage capacity (and throughput). Additionally, you can use Amazon S3 natively or using EMRFS along with or instead of local HDFS which allows you to decouple your memory and compute from your storage providing greater flexibility and cost efficiency.
+
+* **Anti-Patterns**
+    * Small data sets 
+    * ACID transaction requirements
+
+***
+### <span style="color:#007697"> AWS Glue </span>
+
+![glue.png](/img/glue.png)
+
+* **Ideal Usage Patterns**
+
+    AWS Glue is designed to easily prepare data for extract, transform, and load (ETL) jobs. Using AWS Glue gives you the following benefits: 
+    * AWS Glue can automatically crawl your data and generate code to execute or data transformations and loading processes.
+    * Integration with services like Amazon Athena, Amazon EMR, and Amazon Redshift 
+    * Serverless, no infrastructure to provision or manage
+    * AWS Glue generates ETL code that is customizable, reusable, and portable, using familiar technology – Python and Spark.
+
+* Cost Model
+    * With AWS Glue, you pay an hourly rate, billed by the minute, for crawler jobs (discovering data) and ETL jobs (processing and loading data).
+
+* Performance
+    * AWS Glue uses a scale-out Apache Spark environment to load your data into its destination. You can simply specify the number of Data Processing Units (DPUs) that you want to allocate to your ETL job.
+
+* Durability and Availability
+    * AWS Glue connects to the data source of your preference, whether it is in an Amazon S3 file, an Amazon RDS table, or another set of data. 
+
+* Scalability and Elasticity
+    * AWS Glue provides a managed ETL service that runs on a Serverless Apache Spark environment. This allows you to focus on your ETL job and not worry about configuring and managing the underlying compute resources. 
+
+
+* **Anti-Patterns**
+    * Streaming data
+    * Multiple ETL engines
+    * NoSQL Databases
+
+
+***
+### <span style="color:#007697"> Amazon DynamoDB </span>
+
+![dynamodb.png](/img/dynamodb.png)
+
+* **Ideal Usage Patterns**
+
+    DynamoDB is ideal for existing or new applications that need a flexible NoSQL database with low read and write latencies, and the ability to scale storage and throughput up or down as needed without code changes or downtime. Common use cases include:
+    * Mobile apps
+    * Gaming
+    * Digital ad serving
+    * Metadata storage for Amazon S3 objects
+    * E-commerce shopping carts
+    * Web session management
+
+* Cost Model
+    * DynamoDB has three pricing components: provisioned throughput capacity (per hour), indexed data storage (per GB per month), data transfer in or out (per GB per month).
+
+* Performance
+    * SSDs and limiting indexing on attributes provides high throughput and low latency and drastically reduces the cost of read and write operations.
+
+* Durability and Availability
+    * DynamoDB has built-in fault tolerance that automatically and synchronously replicates data across three data centers in a region for high availability and to help protect data against individual machine, or even facility, failures.
+
+* Scalability and Elasticity
+    * DynamoDB is both highly scalable and elastic. There is no limit to the amount of data that you can store in a DynamoDB table, and the service automatically allocates more storage as you store more data using the DynamoDB write API operations.
+
+
+* **Anti-Patterns**
+    * Prewritten application tied to a traditional relational database
+    * Joins or complex transactions
+    * Binary large objects (BLOB) data
+    * Large data with low I/O rate
+
+
+***
+### <span style="color:#007697"> Amazon Redshift </span>
+
+![redshift_bi.png](/img/redshift_bi.png)
+
+![redshift_pa.png](/img/redshift_pa.png)
+
+* **Ideal Usage Patterns**
+    Amazon Redshift is ideal for online analytical processing (OLAP) using your existing business intelligence tools. Organizations are using Amazon Redshift to:
+    * Analyze global sales data for multiple products
+    * Store historical stock trade data
+    * Aggregate gaming data
+
+* Cost Model
+    * Charges are based on the size and number of nodes of your cluster.
+
+* Performance
+    * Amazon Redshift uses a variety of innovations to obtain very high performance on data sets ranging in size from hundreds of gigabytes to a petabyte or more.
+    * Amazon Redshift has a massively parallel processing (MPP) architecture, parallelizing and distributing SQL operations to take advantage of all available resources.
+
+* Durability and Availability
+    * Amazon Redshift automatically detects and replaces a failed node in your data warehouse cluster. Additionally, your data warehouse cluster remains available in the event of a drive failure; because Amazon Redshift mirrors your data across the cluster, it uses the data from another node to rebuild failed drives.
+
+* Scalability and Elasticity
+    * Amazon Redshift enables you to start with a single 160 GB node and scale up to a petabyte or more of compressed user data using many nodes.
+
+
+* **Anti-Patterns**
+    * Small data sets 
+    * On-line transaction processing (OLTP) 
+    * Unstructured data
+    * BLOB data
+
+***
+### <span style="color:#007697"> Amazon Elasticsearch </span>
+
+![elastisearch.png](/img/elastisearch.png)
+
+* **Ideal Usage Patterns**
+
+    Amazon Elasticsearch Service is ideal for querying and searching large amounts of data. Organizations can use Amazon ES to do the following: 
+    * Analyze activity logs, e.g., logs for customer facing applications or websites
+    * Analyze CloudWatch logs with Elasticsearch
+    * Analyze product usage data coming from various services and systems
+    * Analyze social media sentiments, CRM data and find trends for your brand and products
+    * Analyze data stream updates from other AWS services, e.g., Amazon Kinesis Data Streams and Amazon DynamoDB
+
+* Cost Model
+    * You are charged for Amazon ES instance hours, Amazon EBS storage (if you choose this option), and standard data transfer fees.
+
+* Performance
+    * Performance of Amazon ES depends on multiple factors including instance type, workload, index, number of shards used, read replicas, storage  configurations –instance storage or EBS storage (general purpose SSD). Indexes are made up of shards of data which can be distributed on different instances in multiple Availability Zones. 
+
+* Durability and Availability
+    * You can configure your Amazon ES domains for high availability by enabling the Zone Awareness option either at domain creation time or by modifying a live domain. You can use snapshots to recover your domain with preloaded data or to create a new domain with preloaded data. Snapshots are stored in Amazon S3, which is a secure, durable, highly-scalable object storage.
+
+* Scalability and Elasticity
+    * You can add or remove instances, and easily modify Amazon EBS volumes to accommodate data growth.  With the default maximum of 20 data nodes allowed per Amazon ES domain, you can allocate about 30 TB of EBS storage to a single domain. 
+
+* **Anti-Patterns**
+    * Online transaction processing (OLTP)
+    * Ad hoc data querying 
+
+
+***
+### <span style="color:#007697"> Amazon Athena </span>
+
+![athena.png](/img/athena.png)
+
+* **Ideal Usage Patterns**
+    * Interactive ad hoc querying for the data
+    * To query staging data before loading into Redshift
+    * Building Interactive Analytical Solutions
+
+* Cost Model
+    * It is priced per query, $5 per TB of data scanned, and charges based on the amount of data scanned by the query. You can save from 30% to 90% on your per-query costs and get better performance by compressing, partitioning, and converting your data into columnar formats. 
+
+* Performance
+    * You can improve the performance of your query by compressing, partitioning, and converting your data into columnar formats. 
+
+* Durability and Availability
+    * Amazon Athena is highly available and executes queries using compute resources across multiple facilities, automatically routing queries appropriately if a particular facility is unreachable. Athena uses Amazon S3 as its underlying data store, making your data highly available and durable. 
+
+* Scalability and Elasticity
+    * Athena is serverless, so there is no infrastructure to setup or manage, and you can start analyzing data immediately. Since it is serverless it can scale automatically, as needed
+
+
+* **Anti-Patterns**
+    * Enterprise Reporting and Business Intelligence Workloads (Use Redshift)
+    * ETL Workloads (Use EMR/Glue)
+    * RDBMS
+
+***
+
+### <span style="color:#007697"> Solving Big Data Problems on AWS </span>
+
+**What is your data problem?**
+
+A multitude of clients often ask for the meaningless question e.g.,
+* Redshift vs Athena, which is better?
+* Should I use EMR or Glue to implement ETL pipeline?
+* Should I replace the relational database with the NoSQL database?
+* Should I use serverless architecture?
+
+However, big data analytics whitepaper indicates that there are additional aspects you should consider when selecting the right tools for your specific use case. In general, each analytical workload has certain characteristics and requirements that dictate which tool to use, such as:
+
+* How quickly do you need analytic results: in real time, in seconds, or is an hour a more appropriate time frame?
+* How much value will these analytics provide your organization and what budget constraints exist?
+* How large is the data and what is its growth rate?
+* How is the data structured?
+* What integration capabilities do the producers and consumers have?
+* How much latency is acceptable between the producers and consumers?
+* What is the cost of downtime or how available and durable does the solution need to be?
+* Is the analytic workload consistent or elastic?
+
+**Big Data !== Big Costs**
+
+Each one of these questions helps guide you to the right tool. In some cases, you can simply map your big data analytics workload into one of the services based on a set of requirements. However, in most real-world, big data analytic workloads, there are many different, and sometimes conflicting, characteristics and requirements on the same data set.
+
+Big data doesn’t need to mean “big costs”. So, when designing your applications, it’s important to make sure that your design is cost efficient. If it’s not, relative to the alternatives, then it’s probably not the right design. Another common misconception is that using multiple tool sets to solve a big data problem is more expensive or harder to manage than using one big tool. If you take the same example of two different requirements on the same data set, the real-time request may be low on CPU but high on I/O, while the slower processing request may be very compute intensive.
+
+Decoupling can end up being much less expensive and easier to manage because you can build each tool to exact specifications and not overprovision. With the AWS pay-as-you-go model, this equates to a much better value because you could run the batch analytics in just one hour and therefore only pay for the compute resources for that hour. Also, you may find this approach easier to manage rather than leveraging a single system that tries to meet all of the requirements.
 
 ## Real scenario and case study
 
-#### <span style="color:#1E90FF"> Case 1 - Retailing Company </span>
+#### <span style="color:#007697"> Case 1 - Retailing Company </span>
 
 **The goal of the client**
 
@@ -426,10 +712,10 @@ End-to-end Extract, Load and Transform (ELT) design and implementation of sales 
 
 * Use CloudWatch event schedule trigger EC2 and setup some failover logic to launch another instance to run the job when EC2 is failed (HA)
 * We can use Step Function or Lambda to handle the query task more easily
-* We can use EMR (equipped with parallel computing power as well) to transform the data instead of Redshift
+* We can use EMR (equipped with parallel computing power as well) to transform the data instead of using Redshift
 * To handle large scale of data aggregation, Spark can take lots of advantages
 
-#### <span style="color:#1E90FF"> Case 2 -  E-commerce Company </span>
+#### <span style="color:#007697"> Case 2 -  E-commerce Company </span>
 
 **The goal of the client**
 
@@ -450,29 +736,29 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 ![client2-Diagram-original.png](/img/client2-Diagram-original.png)
 
 **Weaken**
-* EC2 will run out of the memory because of Nested JSON processing (poor performance)?
-* Whether the raw data bucket is useless in the workflow?
+* If EC2 will run out of the memory because of Nested JSON processing (Poor performance)?
+* How do we handle EC2 failover?
+* Will EC2 fail easily when processing the large scale of data? (No auto scaling mechanism)
 * Why do we need Glue job to request Redshift to run queries? (No Spark application in our script)
 
 **After performance tunning**
 
 ![client2-Diagram-optimized.png](/img/client2-Diagram-optimized.png)
 
-* 
-* 
-* 
+* Replace EC2 with Athena (Serverless, flexible and scalable) 
+* Use Athena (Presto query) to transform the nested JSON into columnar data instead of using EC2 to run program
+* Replace Glue job with AWS Batch in charge of scheduling tasks
 
 **How about this one**
 
 ![client2-Diagram-best-way.png](/img/client2-Diagram-best-way.png)
 
-* 
-* 
-* 
+* Configure Lambda function into the delivery stream (Stream data transformer)
+* Configure Glue data catalog into the delivery stream (Define the schema mapping for the data type) (JSON to Parquet)
+* Redefine the bucket type as a backup tier and data lake tier
 
 
 ## Summary
-
 
 
 
