@@ -760,7 +760,7 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 
 * Replace EC2 with Athena (Serverless, flexible and scalable) 
 * Use Athena (Presto query) to transform the nested JSON into columnar data instead of using EC2 to run program
-* Replace Glue job with AWS Batch in charge of scheduling tasks
+* Replace Glue job with AWS Batch in charge of task scheduling
 
 **How about this one**
 
@@ -776,11 +776,15 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 
 
 
-## Appendix: CloudFormation
+## Appendix: CloudFormation Labs
 
 
     {"CloudFormation": "Infrastructure as code"}
 
+* [Level 101 - ](./cloudformation/vpc_lab_101/README.md) 
+* [Level 201 - ](./cloudformation/vpc_lab_101/README.md)
+* [Level 301 - ](./cloudformation/vpc_lab_101/README.md)
+* [Level 401 - ](./cloudformation/redshift_lab_401/README.md)
 
 ## References
 * [AWS Well-Architected Framework Whitepaper](https://d1.awsstatic.com/whitepapers/architecture/AWS_Well-Architected_Framework.pdf)
