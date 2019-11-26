@@ -781,7 +781,7 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 
     {"CloudFormation": "Infrastructure as code"}
 
-* [Level 101 - ](./cloudformation/vpc_lab_101/README.md) 
+* [Level 101 - ](./cloudformation/vpc_lab_101/) 
 * [Level 201 - ](./cloudformation/vpc_lab_101/README.md)
 * [Level 301 - ](./cloudformation/vpc_lab_101/README.md)
 * [Level 401 - ](./cloudformation/redshift_lab_401/README.md)
