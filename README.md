@@ -3,7 +3,7 @@
 
 To solve the problem of data silos, many companies try to embrace the advantageous data solution to develop their data platform. AWS is one of the essential components for company to build a prominent data platform that provides scalable and reliable approaches for the customer. Nevertheless, a few pieces of concept need to be established before design your architecture on AWS to make architectural trade-offs as your designs evolve. 
 
-![data_lake.jpg](/img/data_lake.jpg)
+![data_lake.jpg](./img/data_lake.jpg)
 
 The passage will elucidate how to combine AWS Well-Architected Framework concept with data platform design
 
@@ -13,7 +13,7 @@ The passage will elucidate how to combine AWS Well-Architected Framework concept
 
 Building an application is not difficult
 
-![sdlc.jpg](/img/sdlc.jpg)
+![sdlc.jpg](./img/sdlc.jpg)
 
 When you reviewing the system, can you answer the question: **"Are you Well-Architected?"**
 
@@ -22,7 +22,7 @@ When you reviewing the system, can you answer the question: **"Are you Well-Arch
 The AWS Well-Architected Framework is based on five pillars — operational
 excellence, security, reliability, performance efficiency, and cost optimization
 
-![pillars.png](/img/pillars.png)
+![pillars.png](./img/pillars.png)
 
 Name                       | Description  |
 ---------------------------|:------------|
@@ -121,7 +121,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 * **Apply security at all layers**
 
-    ![vpc.png](/img/vpc.png)
+    ![vpc.png](./img/vpc.png)
 
     Rather than just focusing on protection of a single outer layer, apply a defense-in-depth approach with other security controls. Apply to all layers (e.g., edge network, VPC, subnet, load balancer, every instance, operating system, and application).
 
@@ -143,7 +143,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 #### <span style="color:#007697"> Key AWS Services </span>
 
-![security_key_services.png](/img/security_key_services.png)
+![security_key_services.png](./img/security_key_services.png)
 
 * **Data Protection**
     
@@ -209,7 +209,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 #### <span style="color:#007697"> Key AWS Services </span>
 
-![reliability_key_services.png](/img/reliability_key_services.png)
+![reliability_key_services.png](./img/reliability_key_services.png)
 
 * **Foundations**
 
@@ -252,7 +252,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 * **Use serverless architectures**
 
-    ![serverless.png](/img/serverless.png)
+    ![serverless.png](./img/serverless.png)
 
     In the cloud, serverless architectures remove the need for you to run and maintain servers to carry out traditional compute activities. For example, storage services can act as static websites, removing the need for web servers, and event services can host your code for you. This not only removes the operational burden of managing these servers, but also can lower transactional costs because these managed services operate at cloud scale.
 
@@ -266,7 +266,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 #### <span style="color:#007697"> Key AWS Services </span>
 
-![performance_efficiency_key_services.png](/img/performance_efficiency_key_services.png)
+![performance_efficiency_key_services.png](./img/performance_efficiency_key_services.png)
 
 * **Selection**
     * **Compute** 
@@ -277,7 +277,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     * **Storage**
 
-        ![storage_comparison.png](/img/storage_comparison.png)
+        ![storage_comparison.png](./img/storage_comparison.png)
     
         Amazon EBS provides a wide range of storage options (such as SSD and provisioned input/output operations per second (PIOPS)) that allow you to optimize for your use case. Amazon S3 provides serverless content delivery, and Amazon S3 transfer acceleration enables fast, easy, and secure transfers of files over long distances.
 
@@ -286,7 +286,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     * **Database**
 
-        ![database_comparison.png](/img/database_comparison.png)
+        ![database_comparison.png](./img/database_comparison.png)
 
         Amazon RDS provides a wide range of database features (such as PIOPS and read replicas) that allow you to optimize for your use case. Amazon DynamoDB provides single-digit millisecond latency at any scale.
 
@@ -295,7 +295,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
     * **Network**
 
-        ![highly_availability.png](/img/highly_availability.png)
+        ![highly_availability.png](./img/highly_availability.png)
 
         Amazon Route 53 provides latency-based routing. Amazon VPC endpoints and AWS Direct Connect can reduce network distance or jitter.
 
@@ -349,7 +349,7 @@ Test how your architecture and processes perform by regularly scheduling game da
 
 #### <span style="color:#007697"> Key AWS Services </span>
 
-![cost_optimization_key_services.png](/img/cost_optimization_key_services.png)
+![cost_optimization_key_services.png](./img/cost_optimization_key_services.png)
 
 * **Expenditure Awareness**
 
@@ -379,20 +379,20 @@ Test how your architecture and processes perform by regularly scheduling game da
 Nowadays an advanced data platform required a myriad of functionalities
 
 
-![data_architecture.png](/img/data_architecture.png)
+![data_architecture.png](./img/data_architecture.png)
 
 To build a scalable data platform, AWS is a panacea for most companies. However, it is imperative to take the well-architected concept into the data application
 
-![architecture_aws_v05.png](/img/architecture_aws_v05.png)
+![architecture_aws_v05.png](./img/architecture_aws_v05.png)
 
 This section will introduce the AWS big data services and elucidate the best practice of each service. The services including Kinesis, Lambda, EMR, Glue, DynamoDB, Redshift, Elastisearch and Athena
 
 ***
 ### <span style="color:#007697"> Amazon Kinesis </span>
 
- ![kinesis_firehose.png](/img/kinesis_firehose.png)
+ ![kinesis_firehose.png](./img/kinesis_firehose.png)
 
- ![kinesis_stream.png](/img/kinesis_stream.png)
+ ![kinesis_stream.png](./img/kinesis_stream.png)
 
 * **Ideal Usage Patterns**
     * Real-time data analytics
@@ -419,9 +419,9 @@ This section will introduce the AWS big data services and elucidate the best pra
 ***
 ### <span style="color:#007697"> AWS Lambda </span>
 
-![lambda.png](/img/lambda.png)
+![lambda.png](./img/lambda.png)
 
-![lambda_case.png](/img/lambda_case.png)
+![lambda_case.png](./img/lambda_case.png)
 
 * **Ideal Usage Patterns**
     * Real-time File Processing
@@ -450,7 +450,7 @@ This section will introduce the AWS big data services and elucidate the best pra
 ***
 ### <span style="color:#007697"> Amazon EMR </span>
 
-![emr.png](/img/emr.png)
+![emr.png](./img/emr.png)
 
 * **Ideal Usage Patterns**
 
@@ -480,7 +480,7 @@ This section will introduce the AWS big data services and elucidate the best pra
 ***
 ### <span style="color:#007697"> AWS Glue </span>
 
-![glue.png](/img/glue.png)
+![glue.png](./img/glue.png)
 
 * **Ideal Usage Patterns**
 
@@ -512,7 +512,7 @@ This section will introduce the AWS big data services and elucidate the best pra
 ***
 ### <span style="color:#007697"> Amazon DynamoDB </span>
 
-![dynamodb.png](/img/dynamodb.png)
+![dynamodb.png](./img/dynamodb.png)
 
 * **Ideal Usage Patterns**
 
@@ -547,9 +547,9 @@ This section will introduce the AWS big data services and elucidate the best pra
 ***
 ### <span style="color:#007697"> Amazon Redshift </span>
 
-![redshift_bi.png](/img/redshift_bi.png)
+![redshift_bi.png](./img/redshift_bi.png)
 
-![redshift_pa.png](/img/redshift_pa.png)
+![redshift_pa.png](./img/redshift_pa.png)
 
 * **Ideal Usage Patterns**
     Amazon Redshift is ideal for online analytical processing (OLAP) using your existing business intelligence tools. Organizations are using Amazon Redshift to:
@@ -580,7 +580,7 @@ This section will introduce the AWS big data services and elucidate the best pra
 ***
 ### <span style="color:#007697"> Amazon Elasticsearch </span>
 
-![elastisearch.png](/img/elastisearch.png)
+![elastisearch.png](./img/elastisearch.png)
 
 * **Ideal Usage Patterns**
 
@@ -611,7 +611,7 @@ This section will introduce the AWS big data services and elucidate the best pra
 ***
 ### <span style="color:#007697"> Amazon Athena </span>
 
-![athena.png](/img/athena.png)
+![athena.png](./img/athena.png)
 
 * **Ideal Usage Patterns**
     * Interactive ad hoc querying for the data
@@ -648,7 +648,7 @@ A multitude of clients often ask for the meaningless question e.g.,
 * Should I replace the relational database with the NoSQL database?
 * Should I use serverless architecture?
 
-![bigdata.jpg](/img/bigdata.jpg)
+![bigdata.jpg](./img/bigdata.jpg)
 
 However, big data analytics whitepaper indicates that there are additional aspects you should consider when selecting the right tools for your specific use case. In general, each analytical workload has certain characteristics and requirements that dictate which tool to use, such as:
 
@@ -665,11 +665,11 @@ However, big data analytics whitepaper indicates that there are additional aspec
 
 Each one of these questions helps guide you to the right tool. In some cases, you can simply map your big data analytics workload into one of the services based on a set of requirements. However, in most real-world, big data analytic workloads, there are many different, and sometimes conflicting, characteristics and requirements on the same data set.
 
-![bigdata_cost_op.png](/img/bigdata_cost_op.png)
+![bigdata_cost_op.png](./img/bigdata_cost_op.png)
 
 Big data doesn’t need to mean “big costs”. So, when designing your applications, it’s important to make sure that your design is cost efficient. If it’s not, relative to the alternatives, then it’s probably not the right design. Another common misconception is that using multiple tool sets to solve a big data problem is more expensive or harder to manage than using one big tool. If you take the same example of two different requirements on the same data set, the real-time request may be low on CPU but high on I/O, while the slower processing request may be very compute intensive.
 
-![microservice.png](/img/microservice.png)
+![microservice.png](./img/microservice.png)
 
 Decoupling can end up being much less expensive and easier to manage because you can build each tool to exact specifications and not overprovision. With the AWS pay-as-you-go model, this equates to a much better value because you could run the batch analytics in just one hour and therefore only pay for the compute resources for that hour. Also, you may find this approach easier to manage rather than leveraging a single system that tries to meet all of the requirements.
 
@@ -701,7 +701,7 @@ End-to-end Extract, Load and Transform (ELT) design and implementation of sales 
 
 **Network Diagram**
 
-![client1-Diagram-simple_network.png](/img/client1-Diagram-simple_network.png)
+![client1-Diagram-simple_network.png](./img/client1-Diagram-simple_network.png)
 
 **Whether follow the well-architected concept**
 * Data can only transfer on AWS? No traffic out of VPC?
@@ -709,18 +709,18 @@ End-to-end Extract, Load and Transform (ELT) design and implementation of sales 
 
 **Original Architecture Diagram**
 
-![client1-Diagram-origin.png](/img/client1-Diagram-origin.png)
+![client1-Diagram-origin.png](./img/client1-Diagram-origin.png)
 
 **Weaken**
 * Cron schedule and cleansing job may fail due to the downtime of EC2?
 * Why do we need Glue job to request Redshift to run queries? (No Spark application in our script)
 * 40 node$$$ Red$hift cost a lot and run our ELT task only for 2 hours
 
-![redshift_cost.png](/img/redshift_cost.png)
+![redshift_cost.png](./img/redshift_cost.png)
 
 **How about this one**
 
-![client1-Diagram-optimized.png](/img/client1-Diagram-optimized.png)
+![client1-Diagram-optimized.png](./img/client1-Diagram-optimized.png)
 
 
 * Use CloudWatch event schedule trigger EC2 and setup some failover logic to launch another instance to run the job when EC2 is failed (HA)
@@ -746,7 +746,7 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 
 **Original Architecture Diagram**
 
-![client2-Diagram-original.png](/img/client2-Diagram-original.png)
+![client2-Diagram-original.png](./img/client2-Diagram-original.png)
 
 **Weaken**
 * If EC2 will run out of the memory because of Nested JSON processing (Poor performance)?
@@ -756,7 +756,7 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 
 **After performance tunning**
 
-![client2-Diagram-optimized.png](/img/client2-Diagram-optimized.png)
+![client2-Diagram-optimized.png](./img/client2-Diagram-optimized.png)
 
 * Replace EC2 with Athena (Serverless, flexible and scalable) 
 * Use Athena (Presto query) to transform the nested JSON into columnar data instead of using EC2 to run program
@@ -764,7 +764,7 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 
 **How about this one**
 
-![client2-Diagram-best-way.png](/img/client2-Diagram-best-way.png)
+![client2-Diagram-best-way.png](./img/client2-Diagram-best-way.png)
 
 * Configure Lambda function into the delivery stream (Stream data transformer)
 * Configure Glue data catalog into the delivery stream (Define the schema mapping for the data type) (JSON to Parquet)

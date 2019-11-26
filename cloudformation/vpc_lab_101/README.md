@@ -4,7 +4,7 @@
 
 This lab is a fundamental VPC setup, therefore, it does not include any advanced infrastructure or complex network configuration
 
-![Diagram-vpc_lab.png](./cloudformation/vpc_lab_101/img/Diagram-vpc_lab.png)
+![Diagram-vpc_lab.png](./img/Diagram-vpc_lab.png)
 
 ### CloudFormation Deployment
 * On the service menu, click **CloudFormation**
@@ -17,12 +17,12 @@ This lab is a fundamental VPC setup, therefore, it does not include any advanced
     * Make sure that **Prefix Name** must only contain lowercase letters and numbers or underscore (_)
     * Make sure the input parameters must match the pattern
 
-![cf.png](./cloudformation/vpc_lab_101/img/cf.png)
+![cf.png](./img/cf.png)
 
 * After entered every parameter and the stack name, click **Next**
 * On **Configure stack options** page, add a stack-level tag with **Project** and **VPC Lab** as key and value
 
-![tag.png](./cloudformation/vpc_lab_101/img/tag.png)
+![tag.png](./img/tag.png)
 
 * Click **Next**
 * Click **Create Stack**
