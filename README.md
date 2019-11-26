@@ -1,6 +1,7 @@
 
 # Prominent data platform design with AWS well-architected framework
 
+To solve the problem of data silos, many companies try to embrace the advantageous data solution to develop their data platform. AWS is one of the essential components for company to build a prominent data platform that provides scalable and reliable approaches for the customer. Nevertheless, a few pieces of concept need to be established before design your architecture on AWS to make architectural trade-offs as your designs evolve. 
 
 ![data_lake.jpg](/img/data_lake.jpg)
 
@@ -420,6 +421,8 @@ This section will introduce the AWS big data services and elucidate the best pra
 
 ![lambda.png](/img/lambda.png)
 
+![lambda_case.png](/img/lambda_case.png)
+
 * **Ideal Usage Patterns**
     * Real-time File Processing
     * Real-time Stream Processing
@@ -645,6 +648,8 @@ A multitude of clients often ask for the meaningless question e.g.,
 * Should I replace the relational database with the NoSQL database?
 * Should I use serverless architecture?
 
+![bigdata.jpg](/img/bigdata.jpg)
+
 However, big data analytics whitepaper indicates that there are additional aspects you should consider when selecting the right tools for your specific use case. In general, each analytical workload has certain characteristics and requirements that dictate which tool to use, such as:
 
 * How quickly do you need analytic results: in real time, in seconds, or is an hour a more appropriate time frame?
@@ -660,10 +665,18 @@ However, big data analytics whitepaper indicates that there are additional aspec
 
 Each one of these questions helps guide you to the right tool. In some cases, you can simply map your big data analytics workload into one of the services based on a set of requirements. However, in most real-world, big data analytic workloads, there are many different, and sometimes conflicting, characteristics and requirements on the same data set.
 
+![bigdata_cost_op.png](/img/bigdata_cost_op.png)
+
 Big data doesn’t need to mean “big costs”. So, when designing your applications, it’s important to make sure that your design is cost efficient. If it’s not, relative to the alternatives, then it’s probably not the right design. Another common misconception is that using multiple tool sets to solve a big data problem is more expensive or harder to manage than using one big tool. If you take the same example of two different requirements on the same data set, the real-time request may be low on CPU but high on I/O, while the slower processing request may be very compute intensive.
+
+![microservice.png](/img/microservice.png)
 
 Decoupling can end up being much less expensive and easier to manage because you can build each tool to exact specifications and not overprovision. With the AWS pay-as-you-go model, this equates to a much better value because you could run the batch analytics in just one hour and therefore only pay for the compute resources for that hour. Also, you may find this approach easier to manage rather than leveraging a single system that tries to meet all of the requirements.
 
+* [What is Microservices?](https://aws.amazon.com/tw/microservices/)
+* [What is Serverless?](https://aws.amazon.com/tw/serverless/)
+
+***
 ## Real scenario and case study
 
 #### <span style="color:#007697"> Case 1 - Retailing Company </span>
@@ -774,15 +787,3 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 * [Big Data Analytics Options on AWS](https://d1.awsstatic.com/whitepapers/Big_Data_Analytics_Options_on_AWS.pdf)
 ## Team
 This lab is brought to you by [eCloudvalley Data team](https://www.ecloudvalley.com)
-
-
-
-
-
-
-
-
-
-
-
-
