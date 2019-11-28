@@ -6,6 +6,11 @@ This lab is a fundamental VPC setup, therefore, it does not include any advanced
 
 ![Diagram-vpc_lab.png](./img/Diagram-vpc_lab.png)
 
+### Prerequisites
+* You must have an AWS account and an IAM user with sufficient permissions to interact with the AWS Management Console
+
+* Download the CloudFormation stack **vpc.yml** 
+
 ### CloudFormation Deployment
 * On the service menu, click **CloudFormation**
 * For **Prepare template**, choose **Template is ready**
@@ -26,8 +31,23 @@ This lab is a fundamental VPC setup, therefore, it does not include any advanced
 
 * Click **Next**
 * Click **Create Stack**
-* CloudFormation will start building all resources 
+* CloudFormation will start to build all resources
 
+![building.png](./img/building.png)
+
+* Once stack finishes the creation the console will display as below
+
+![complete.png](./img/complete.png)
+
+* You can go through the **VPC console** and check every resource you have created
+
+![display1.png](./img/display1.png)
+***
+
+![display2.png](./img/display2.png)
+***
+
+![display3.png](./img/display3.png)
 
 ### Clean-Up Operation Procedures
 

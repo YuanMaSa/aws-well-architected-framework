@@ -1,0 +1,1871 @@
+# This stack is refer to => https://aws.amazon.com/tw/blogs/big-data/automate-amazon-redshift-cluster-creation-using-aws-cloudformation/
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Cloudformation Template to create a VPC with public and private subnets in 3 AZs, highly available SSH bastion host and Amazon Redshift Cluster'
+
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+
+      -
+        Label:
+          default: Environment
+        Parameters:
+          - TagEnvironment
+
+      - Label:
+          default: VPC Parameters
+        Parameters:
+          - CidrClassB
+
+      - Label:
+          default: Network Configuration
+        Parameters:
+          - RemoteAccessCIDR
+
+      - Label:
+          default: Amazon EC2 Configuration
+        Parameters:
+          - KeyPairName
+          - BastionInstanceType
+          - LogsRetentionInDays
+
+      -
+        Label:
+          default: Linux Bastion Configuration
+        Parameters:
+          - BastionTenancy
+          - EnableBanner
+          - BastionBanner
+          - EnableTCPForwarding
+          - EnableX11Forwarding
+          - AltInitScript
+          - OSImageOverride
+
+      -
+        Label:
+          default: Amazon Redshift Parameters
+        Parameters:
+          - NodeType
+          - NumberOfNodes
+          - RedshiftClusterPort
+          - DatabaseName
+          - MasterUsername
+          - MasterUserPassword
+
+      -
+        Label:
+          default: Amazon Redshift Advanced Parameters
+        Parameters:
+          - EnableLoggingToS3
+          - MaxConcurrentCluster
+          - LoadTPCDS3TBDataset
+          - EncryptionAtRest
+          - kmskey
+          - SnapshotIdentifier
+          - SnapshotAccountNumber
+          - Maintenancewindow
+          - S3BucketForRedshiftIAMRole
+          - GlueCatalogDatabase
+
+      -
+        Label:
+          default: Tag Identifiers
+        Parameters:
+          - RedshiftRelatedTagName
+          - TagTier
+          - TagConfidentiality
+
+      - Label:
+          default: Amazon SNS Configuration
+        Parameters:
+          - NotificationList
+
+    ParameterLabels:
+
+      TagEnvironment:
+        default: Environment
+
+      CidrClassB:
+        default: ClassB 2nd Octet (VPC CIDR)
+
+      BastionTenancy:
+        default: Bastion Tenancy
+
+      BastionBanner:
+        default: Bastion Banner
+
+      BastionInstanceType:
+        default: Bastion Instance Type
+
+      EnableBanner:
+        default: Enable Banner
+
+      EnableTCPForwarding:
+        default: Enable TCP Forwarding
+
+      EnableX11Forwarding:
+        default: Enable X11 Forwarding
+
+      KeyPairName:
+        default: Key Pair Name
+
+      RemoteAccessCIDR:
+        default: Allowed Bastion External Access CIDR
+
+      AltInitScript:
+        default: Custom Bootstrap Script
+
+      OSImageOverride:
+        default: AMI override
+
+      NotificationList:
+        default: SNS Notification Email
+
+      DatabaseName:
+        default: Redshift database name
+
+      RedshiftClusterPort:
+        default: Redshift cluster port
+
+      NodeType:
+        default: Node type for Redshift cluster
+
+      NumberOfNodes:
+        default: Number of nodes in Redshift cluster
+
+      MasterUsername:
+        default: Redshift master user name
+
+      MasterUserPassword:
+        default: Redshift master user password
+
+      S3BucketForRedshiftIAMRole:
+        default: Amazon S3 bucket for Redshift IAM role
+
+      EnableLoggingToS3:
+        default: Enable Redshift logging to S3
+
+      MaxConcurrentCluster:
+        default: Max number of concurrent clusters
+
+      EncryptionAtRest:
+        default: Encryption at rest
+
+      kmskey:
+        default: KMS key ID
+
+      SnapshotIdentifier:
+        default: Redshift snapshot identifier
+
+      SnapshotAccountNumber:
+        default: AWS account-ID of the Redshift snapshot
+
+      GlueCatalogDatabase:
+        default: Glue catalog database name
+
+      Maintenancewindow:
+        default: Redshift maintenance window
+
+      RedshiftRelatedTagName:
+        default: Unique friendly name
+
+      TagTier:
+        default: Functional tier
+
+      TagConfidentiality:
+        default: Confidentiality classifier
+
+Parameters:
+  # Part I => VPC configuration
+  TagEnvironment:
+    Type: String
+    AllowedValues:
+      - Development
+      - test
+      - pre-prod
+      - Production
+    Description: The environment tag that is used to designate the environment stage of the associated AWS resource.
+    Default: 'Development'
+
+  CidrClassB:
+    Description: Specify the 2nd Octet of IPv4 CIDR block for the VPC (10.XXX.0.0/16) in the range [0-255]
+    Type: Number
+    Default: 0
+    ConstraintDescription: 'Must be in the range [0-255]'
+    MinValue: 0
+    MaxValue: 255
+  # Part II => Bastion configuration
+  NotificationList:
+    Type: String
+    Description: The Email notification list is used to configure a SNS topic for sending cloudwatch alarm notifications
+    AllowedPattern: '^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$'
+    ConstraintDescription: provide a valid email address.
+
+  LogsRetentionInDays:
+    Description: Specify the number of days you want to retain log events
+    Type: Number
+    Default: 14
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
+
+  BastionBanner:
+    Default: >-
+      https://aws-quickstart.s3.amazonaws.com/quickstart-linux-bastion/scripts/banner_message.txt
+    Description: Banner text to display upon login. Use default or provide AWS S3 location for the file containing Banner text.
+    Type: String
+
+  BastionTenancy:
+    Description: 'VPC Tenancy in which bastion host will be launched. Options: ''dedicated'' or ''default'''
+    Type: String
+    Default: default
+    AllowedValues:
+      - dedicated
+      - default
+
+  BastionInstanceType:
+    AllowedValues:
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+    Default: t2.micro
+    Description: Amazon EC2 instance type for the bastion instance. t2 instance types are not supported for dedicated VPC tenancy (option below).
+    Type: String
+
+  EnableBanner:
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+    Description: >-
+      To include a banner to be displayed when connecting via SSH to the
+      bastion, set this parameter to true
+    Type: String
+
+  EnableTCPForwarding:
+    Type: String
+    Description: Enable/Disable TCP Forwarding
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+  EnableX11Forwarding:
+    Type: String
+    Description: Enable/Disable X11 Forwarding
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+  KeyPairName:
+    Description: >-
+      Enter a Public/private key pair. If you do not have one in this AWS Region,
+      create it before continuing
+    Type: 'AWS::EC2::KeyPair::KeyName'
+
+  RemoteAccessCIDR:
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
+    Description: Allowed CIDR block in the x.x.x.x/x format for external SSH access to the bastion host
+    Default: 211.21.98.205/32
+    Type: String
+
+  AltInitScript:
+    AllowedPattern: ^http.*|^$
+    ConstraintDescription: URL must begin with http
+    Description: Optional. Specify custom bootstrap script AWS S3 location to run during bastion host setup
+    Default: ''
+    Type: String
+
+  OSImageOverride:
+    Description: Optional. Specify a region specific image to use for the instance
+    Type: String
+    Default: ''
+  # Part III => Redshift configuration
+  DatabaseName:
+    Description: The name of the first database to be created when the cluster is created.
+    Type: String
+    Default: rsdev01
+    AllowedPattern: '([a-z]|[0-9])+'
+
+  RedshiftClusterPort:
+    Description: The port number on which the cluster accepts incoming connections.
+    Type: Number
+    Default: '8200'
+
+  NumberOfNodes:
+    Description: >-
+      The number of compute nodes in the cluster. For multi-node clusters, the NumberOfNodes parameter must be greater than 1.
+    Type: Number
+    Default: '2'
+
+  NodeType:
+    Description: The type of node to be provisioned
+    Type: String
+    Default: dc2.large
+    AllowedValues:
+      - dc2.large
+      - dc2.8xlarge
+      - ds2.xlarge
+      - ds2.8xlarge
+
+  MasterUsername:
+    Description: The user name that is associated with the master user account for the cluster that is being created
+    Type: String
+    Default: rsadmin
+    AllowedPattern: '([a-z])([a-z]|[0-9])*'
+    ConstraintDescription: must start with a-z and contain only a-z or 0-9.
+
+  MasterUserPassword:
+    Description: The password that is associated with the master user account for the cluster that is being created.
+    Type: String
+    NoEcho: 'true'
+    MinLength: '8'
+    MaxLength: '64'
+    AllowedPattern: >-
+     ^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?!._*[@/\\\"']).*$
+    ConstraintDescription: >-
+     Enter alphanumeric password for the master user. The password must contain 8 to 64 printable ASCII characters, excluding: /, ", \'', \ and @. It must contain one uppercase letter, one lowercase letter, and one number.
+
+  Maintenancewindow:
+    Description: Maintenance Window for Redshift Cluster
+    Type: String
+    Default: 'sat:05:00-sat:05:30'
+
+  MaxConcurrentCluster:
+    Description: The maximum number of concurrency scaling Redshift clusters.
+    Type: String
+    Default: '1'
+
+  EncryptionAtRest:
+    Description: Enables or disables encryption at rest of the Redshift database.
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - true
+      - false
+    ConstraintDescription: must be true or false.
+
+  kmskey:
+    Description: The existing KMS key ID for encrypting Redshift database at-rest.
+    Type: String
+    Default: ''
+
+  SnapshotIdentifier:
+    Description: The Redshift snapshot identifier. Leave this blank for a new cluster. Enter the snapshot identifier, only if you want to restore from a snapshot.
+    Default: ''
+    Type: String
+
+  SnapshotAccountNumber:
+    Description: The AWS account number where the Redshift snapshot was created. Leave this blank, if the snapshot was created in the current AWS account.
+    Default: ''
+    Type: String
+
+  EnableLoggingToS3:
+    Default: 'false'
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Description: Enables or disables logging to an S3 bucket.  To enable logging, select True.
+
+  S3BucketForRedshiftIAMRole:
+    Type: String
+    Description: Create an Amazon S3 bucket for Redshift Spectrum (enter a unique bucket name). An IAM role will be created and associated to the Redshift cluster with GET and LIST access to this bucket.
+    Default: 'e.g., redshift-spectrum-bucket-ver6689'
+
+  GlueCatalogDatabase:
+    Type: String
+    Description: The name of your Glue Data Catalog database.
+    AllowedPattern: '([ \t\n\x0B\f\r])*|([a-z])([\_]|[a-z]|[\_]|[0-9])*'
+    ConstraintDescription: must start with a-z and contain only a-z or 0-9 or underscore (_).
+
+  RedshiftRelatedTagName:
+    Type: String
+    Description: The unique friendly name which will be added to the environment tag.
+    Default: 'redshift'
+
+  TagTier:
+    Type: String
+    AllowedValues:
+      - data
+      - web
+      - application
+    Description: The functional tier of the associated AWS resource.
+    Default: 'data'
+
+  TagConfidentiality:
+    Type: String
+    Description: The confidentiality classification of the data that is associated with the resource.
+    AllowedValues:
+      - public
+      - private
+      - confidential
+      - pii/phi
+    Default: 'private'
+
+Mappings:
+
+  AWSAMIRegionMap:
+    AMI:
+      AMZNLINUXHVM: amzn-ami-hvm-2018.03.0.20180811-x86_64-gp2
+    ap-northeast-1:
+      AMZNLINUXHVM: ami-06cd52961ce9f0d85
+    ap-northeast-2:
+      AMZNLINUXHVM: ami-0a10b2721688ce9d2
+    ap-south-1:
+      AMZNLINUXHVM: ami-0912f71e06545ad88
+    ap-southeast-1:
+      AMZNLINUXHVM: ami-08569b978cc4dfa10
+    ap-southeast-2:
+      AMZNLINUXHVM: ami-09b42976632b27e9b
+    ca-central-1:
+      AMZNLINUXHVM: ami-0b18956f
+    eu-central-1:
+      AMZNLINUXHVM: ami-0233214e13e500f77
+    eu-west-1:
+      AMZNLINUXHVM: ami-047bb4163c506cd98
+    eu-west-2:
+      AMZNLINUXHVM: ami-f976839e
+    eu-west-3:
+      AMZNLINUXHVM: ami-0ebc281c20e89ba4b
+    sa-east-1:
+      AMZNLINUXHVM: ami-07b14488da8ea02a0
+    us-east-1:
+      AMZNLINUXHVM: ami-0ff8a91507f77f867
+    us-east-2:
+      AMZNLINUXHVM: ami-0b59bfac6be064b78
+    us-west-1:
+      AMZNLINUXHVM: ami-0bdb828fd58c52235
+    us-west-2:
+      AMZNLINUXHVM: ami-a0cfeed8
+
+  LinuxAMINameMap:
+    Amazon-Linux-HVM:
+      Code: AMZNLINUXHVM
+
+Conditions:
+
+  GovCloudCondition: !Equals
+    - !Ref 'AWS::Region'
+    - us-gov-west-1
+
+  UseAlternativeInitialization: !Not
+    - !Equals
+      - !Ref AltInitScript
+      - ''
+
+  UseOSImageOverride: !Not
+    - !Equals
+      - !Ref OSImageOverride
+      - ''
+
+  IsGovCloud: !Equals [!Ref 'AWS::Region', 'us-gov-west-1']
+
+  RedshiftSingleNodeClusterCondition:
+    Fn::Equals:
+    - Ref: NumberOfNodes
+    - '1'
+
+  IsProd: !Equals [!Ref TagEnvironment, 'Production']
+
+  IsEncryptionAtRest: !Equals [!Ref EncryptionAtRest, 'true']
+
+  IsEnableLoggingToS3: !And
+     - !Equals [!Ref EnableLoggingToS3, 'true']
+     - !Not [!Condition IsGovCloud]
+
+  IsConfigureRedshiftIAMRole:
+    Fn::Not:
+    - Fn::Equals:
+      - ''
+      - Ref: S3BucketForRedshiftIAMRole
+
+  IsGlueCatalogName:
+    Fn::Not:
+    - Fn::Equals:
+      - ''
+      - Ref: GlueCatalogDatabase
+
+  IsSnapshotSpecified:
+    Fn::Not:
+    - Fn::Equals:
+      - ''
+      - Ref: SnapshotIdentifier
+
+  IsSnapshotAccountSpecified:
+    Fn::Not:
+    - Fn::Equals:
+      - ''
+      - Ref: SnapshotAccountNumber
+
+Resources:
+  # ====================== Part I  => Redshift VPC configuration ======================
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: !Sub '10.${CidrClassB}.0.0/16'
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+      - Key: Name
+        Value: !Sub '${AWS::StackName}-VPC'
+
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Sub '10.${CidrClassB}.0.0/16'
+
+  VPCGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  NATEIPA:
+    DependsOn: VPCGatewayAttachment
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  NATEIPB:
+    DependsOn: VPCGatewayAttachment
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  NATEIPC:
+    DependsOn: VPCGatewayAttachment
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  SubnetAPublic:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Sub '10.${CidrClassB}.0.0/20'
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [0, !GetAZs '']
+                   - 'Public'
+      - Key: Reach
+        Value: public
+
+  SubnetAPrivate:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Sub '10.${CidrClassB}.16.0/20'
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [0, !GetAZs '']
+                   - 'Private'
+      - Key: Reach
+        Value: private
+
+  SubnetBPublic:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Sub '10.${CidrClassB}.32.0/20'
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [1, !GetAZs '']
+                   - 'Public'
+      - Key: Reach
+        Value: public
+
+  SubnetBPrivate:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Sub '10.${CidrClassB}.48.0/20'
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [1, !GetAZs '']
+                   - 'Private'
+      - Key: Reach
+        Value: private
+
+  SubnetCPublic:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select [2, !GetAZs '']
+      CidrBlock: !Sub '10.${CidrClassB}.64.0/20'
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [2, !GetAZs '']
+                   - 'Public'
+      - Key: Reach
+        Value: public
+
+  SubnetCPrivate:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Select [2, !GetAZs '']
+      CidrBlock: !Sub '10.${CidrClassB}.80.0/20'
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [2, !GetAZs '']
+                   - 'Private'
+      - Key: Reach
+        Value: private
+
+  RouteTablePublic:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - 'Public'
+
+  RouteTableAPrivate:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [0, !GetAZs '']
+                   - 'Private'
+
+  RouteTableBPrivate:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [1, !GetAZs '']
+                   - 'Private'
+
+  RouteTableCPrivate:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [2, !GetAZs '']
+                   - 'Private'
+
+  RouteTableAssociationAPublic:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetAPublic
+      RouteTableId: !Ref RouteTablePublic
+
+  RouteTableAssociationAPrivate:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetAPrivate
+      RouteTableId: !Ref RouteTableAPrivate
+
+  RouteTableAssociationBPublic:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetBPublic
+      RouteTableId: !Ref RouteTablePublic
+
+  RouteTableAssociationBPrivate:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetBPrivate
+      RouteTableId: !Ref RouteTableBPrivate
+
+  RouteTableAssociationCPublic:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetCPublic
+      RouteTableId: !Ref RouteTablePublic
+
+  RouteTableAssociationCPrivate:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetCPrivate
+      RouteTableId: !Ref RouteTableCPrivate
+
+  RouteTablePublicInternetRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTablePublic
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref InternetGateway
+
+  NetworkAclPublic:
+    Type: 'AWS::EC2::NetworkAcl'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - 'NACL'
+                   - 'Public'
+
+  NetworkAclPrivate:
+    Type: 'AWS::EC2::NetworkAcl'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - 'NACL'
+                   - 'Private'
+
+  SubnetNetworkAclAssociationAPublic:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref SubnetAPublic
+      NetworkAclId: !Ref NetworkAclPublic
+
+  SubnetNetworkAclAssociationAPrivate:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref SubnetAPrivate
+      NetworkAclId: !Ref NetworkAclPrivate
+
+  SubnetNetworkAclAssociationBPublic:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref SubnetBPublic
+      NetworkAclId: !Ref NetworkAclPublic
+
+  SubnetNetworkAclAssociationBPrivate:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref SubnetBPrivate
+      NetworkAclId: !Ref NetworkAclPrivate
+
+  SubnetNetworkAclAssociationCPublic:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref SubnetCPublic
+      NetworkAclId: !Ref NetworkAclPublic
+
+  SubnetNetworkAclAssociationCPrivate:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref SubnetCPrivate
+      NetworkAclId: !Ref NetworkAclPrivate
+
+  NetworkAclEntryInPublicAllowAll:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref NetworkAclPublic
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: false
+      CidrBlock: '0.0.0.0/0'
+
+  NetworkAclEntryOutPublicAllowAll:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref NetworkAclPublic
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      CidrBlock: '0.0.0.0/0'
+
+  NetworkAclEntryInPrivateAllowVPC:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref NetworkAclPrivate
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: false
+      CidrBlock: '0.0.0.0/0'
+
+  NetworkAclEntryOutPrivateAllowVPC:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref NetworkAclPrivate
+      RuleNumber: 99
+      Protocol: -1
+      RuleAction: allow
+      Egress: true
+      CidrBlock: '0.0.0.0/0'
+
+  NATGatewayA:
+    DependsOn: VPC
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt [NATEIPA,AllocationId]
+      SubnetId: !Ref SubnetAPublic
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [0, !GetAZs '']
+                   - 'NGW'
+
+  NATGatewayB:
+    DependsOn: VPC
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt [NATEIPB,AllocationId]
+      SubnetId: !Ref SubnetBPublic
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [1, !GetAZs '']
+                   - 'NGW'
+
+  NATGatewayC:
+    DependsOn: VPC
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt [NATEIPC,AllocationId]
+      SubnetId: !Ref SubnetCPublic
+      Tags:
+      - Key: Name
+        Value: !Join
+                 - '_'
+                 - - !Sub '10.${CidrClassB}.0.0/16'
+                   - !Select [2, !GetAZs '']
+                   - 'NGW'
+
+  RouteTablePrivateANATRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableAPrivate
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGatewayA
+
+  RouteTablePrivateBNATRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableBPrivate
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGatewayB
+
+  RouteTablePrivateCNATRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableCPrivate
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGatewayC
+
+  S3VPCEndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: '*'
+            Effect: Allow
+            Resource: '*'
+            Principal: '*'
+      RouteTableIds:
+        - !Ref RouteTableAPrivate
+        - !Ref RouteTableBPrivate
+        - !Ref RouteTableCPrivate
+      ServiceName: !Join
+        - ''
+        - - com.amazonaws.
+          - !Ref 'AWS::Region'
+          - .s3
+      VpcId: !Ref VPC
+
+# ====================== Part II  => Redshift EC2 Bastion configuration ======================
+  EC2SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref NotificationList
+          Protocol: email
+      TopicName: !Sub '${RedshiftRelatedTagName}_Bastion_Alarm'
+
+  BastionMainLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      RetentionInDays: !Ref LogsRetentionInDays
+
+  SSHMetricFilter:
+    Type: 'AWS::Logs::MetricFilter'
+    Properties:
+      LogGroupName: !Ref BastionMainLogGroup
+      FilterPattern: ON FROM USER PWD
+      MetricTransformations:
+        - MetricName: SSHCommandCount
+          MetricValue: 1
+          MetricNamespace: !Join
+            - /
+            - - AWSQuickStart
+              - !Ref 'AWS::StackName'
+
+  BastionSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Ref 'AWS::StackName'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref RemoteAccessCIDR
+        - IpProtocol: icmp
+          FromPort: '-1'
+          ToPort: '-1'
+          CidrIp: !Ref RemoteAccessCIDR
+      Tags:
+      - Key: Name
+        Value: !Sub '${AWS::StackName}-BastionSecurityGroup'
+
+  BastionHostRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      ManagedPolicyArns:
+        - !If [IsConfigureRedshiftIAMRole, !Ref S3BucketPolicy, !Ref "AWS::NoValue"]
+        - !If [IsGlueCatalogName, "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole", !Ref "AWS::NoValue"]
+      Policies:
+        - PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - 's3:GetObject'
+                Resource: !Sub
+                  - 'arn:${Partition}:s3:::aws-quickstart/quickstart-linux-bastion/*'
+                  - Partition: !If
+                      - GovCloudCondition
+                      - aws-us-gov
+                      - aws
+                Effect: Allow
+          PolicyName: aws-quick-start-s3-policy
+        - PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:GetLogEvents'
+                  - 'logs:PutLogEvents'
+                  - 'logs:DescribeLogGroups'
+                  - 'logs:DescribeLogStreams'
+                  - 'logs:PutRetentionPolicy'
+                  - 'logs:PutMetricFilter'
+                  - 'logs:CreateLogGroup'
+                Resource: !Sub
+                  - >-
+                    arn:${Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${BastionMainLogGroup}:*
+                  - Partition: !If
+                      - GovCloudCondition
+                      - aws-us-gov
+                      - aws
+                Effect: Allow
+          PolicyName: bastion-cloudwatch-logs-policy
+        - PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - 'ec2:AssociateAddress'
+                  - 'ec2:DescribeAddresses'
+                Resource:
+                  - '*'
+                Effect: Allow
+          PolicyName: bastion-eip-policy
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Effect: Allow
+        Version: 2012-10-17
+
+  BastionHostProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Roles:
+        - !Ref BastionHostRole
+      Path: /
+
+  EIP:
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: vpc
+
+  BastionAutoScalingGroup:
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      DesiredCapacity: '1'
+      LaunchConfigurationName: !Ref BastionLaunchConfiguration
+      MaxSize: '1'
+      MinSize: '1'
+      Tags:
+      - Key: Name
+        Value: !Sub
+        - '${AWS::StackName}-BastionHost-${CidrBlock}'
+        - CidrBlock: !GetAtt 'VPC.CidrBlock'
+        PropagateAtLaunch: true
+      NotificationConfigurations:
+      - TopicARN: !Ref EC2SNSTopic
+        NotificationTypes:
+        - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
+        - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
+      VPCZoneIdentifier: !Split [',', !Join [',', [!Ref SubnetAPublic, !Ref SubnetBPublic, !Ref SubnetCPublic]]]
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT10M
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        PauseTime: PT10M
+        SuspendProcesses:
+        - HealthCheck
+        - ReplaceUnhealthy
+        - AZRebalance
+        - AlarmNotification
+        - ScheduledActions
+        WaitOnResourceSignals: true
+
+  BastionLaunchConfiguration:
+    Type: 'AWS::AutoScaling::LaunchConfiguration'
+    Metadata:
+      'AWS::CloudFormation::Authentication':
+        S3AccessCreds:
+          type: S3
+          roleName: !Ref BastionHostRole
+          buckets:
+            - "aws-quickstart"
+      'AWS::CloudFormation::Init':
+        config:
+          files:
+            /tmp/bastion_bootstrap.sh:
+              source: !If
+                - UseAlternativeInitialization
+                - !Ref AltInitScript
+                - !Sub
+                  - >-
+                    https://aws-quickstart.${QSS3Region}.amazonaws.com/quickstart-linux-bastion/scripts/bastion_bootstrap.sh
+                  - QSS3Region: !If
+                      - GovCloudCondition
+                      - s3-us-gov-west-1
+                      - s3
+              mode: '000550'
+              owner: root
+              group: root
+              authentication: S3AccessCreds
+            /home/ec2-user/.psqlrc:
+              content: !Sub |
+                \set PROMPT1 '%[%033[1;31m%]%M%[%033[0m%]:%> %[%033[1;33m%]%n%[%033[0m%]@%/%R%#%x '
+                \pset pager off
+                \set COMP_KEYWORD_CASE upper
+                \set VERBOSITY verbose
+                \set HISTCONTROL ignorespace
+                \set HISTFILE ~/.psql_history- :DBNAME
+                \set HISTSIZE 5000
+                \set version 'SELECT version();'
+                \set extensions 'select * from pg_available_extensions;'
+              mode: "000644"
+              owner: "root"
+              group: "root"
+          commands:
+            b-bootstrap:
+              command: !Join
+                - ''
+                - - ./tmp/bastion_bootstrap.sh
+                  - ' --banner '
+                  - !Ref BastionBanner
+                  - ' --enable '
+                  - !Ref EnableBanner
+                  - ' --tcp-forwarding '
+                  - !Ref EnableTCPForwarding
+                  - ' --x11-forwarding '
+                  - !Ref EnableX11Forwarding
+    Properties:
+      AssociatePublicIpAddress: 'true'
+      PlacementTenancy: !Ref BastionTenancy
+      KeyName: !Ref KeyPairName
+      IamInstanceProfile: !Ref BastionHostProfile
+      ImageId: !If
+        - UseOSImageOverride
+        - !Ref OSImageOverride
+        - !FindInMap
+          - AWSAMIRegionMap
+          - !Ref 'AWS::Region'
+          - !FindInMap
+            - LinuxAMINameMap
+            - 'Amazon-Linux-HVM'
+            - Code
+      SecurityGroups:
+        - !Ref BastionSecurityGroup
+      InstanceType: !Ref BastionInstanceType
+      UserData: !Base64
+        'Fn::Join':
+          - ''
+          - - |
+              #!/bin/bash
+            - |
+              set -x
+            - |
+              export PATH=$PATH:/usr/local/bin
+            - |
+              which pip &> /dev/null
+            - |
+              if [ $? -ne 0 ] ; then
+            - |2
+                  echo "PIP NOT INSTALLED"
+            - |2
+                  [ `which yum` ] && $(yum install -y epel-release; yum install -y python-pip) && echo "PIP INSTALLED"
+            - |2
+                  [ `which apt-get` ] && apt-get -y update && apt-get -y install python-pip && echo "PIP INSTALLED"
+            - |
+              fi
+            - |
+              pip install --upgrade pip &> /dev/null
+            - |
+              pip install awscli --ignore-installed six &> /dev/null
+            - >
+              easy_install
+              https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+            - |
+              yum install -y postgresql96 &> /dev/null
+            - EIP_LIST="
+            - !Ref EIP
+            - |
+              "
+            - CLOUDWATCHGROUP=
+            - !Ref BastionMainLogGroup
+            - |+
+
+            - 'cfn-init -v --stack '
+            - !Ref 'AWS::StackName'
+            - ' --resource BastionLaunchConfiguration --region '
+            - !Ref 'AWS::Region'
+            - |+
+
+            - 'cfn-signal -e $? --stack '
+            - !Ref 'AWS::StackName'
+            - ' --resource BastionAutoScalingGroup --region '
+            - !Ref 'AWS::Region'
+            - |+
+
+            - 'aws s3 cp s3://ecv-tutorial-preparation/spectrum_sample_data/ '
+            - !Sub 's3://${S3BucketForRedshift}/ --sse'
+            - !Sub ' --recursive --region ${AWS::Region}'
+            - |+
+
+            - 'aws glue start-crawler --name '
+            - !Sub '${GlueCrawler} --region ${AWS::Region}'
+            - |+
+
+  CPUTooHighAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: 'Average CPU utilization over last 10 minutes higher than 80%'
+      Namespace: 'AWS/EC2'
+      MetricName: CPUUtilization
+      Statistic: Average
+      Period: 600
+      EvaluationPeriods: 1
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 80
+      AlarmActions:
+      - Ref: EC2SNSTopic
+      Dimensions:
+      - Name: AutoScalingGroupName
+        Value: !Ref BastionAutoScalingGroup
+
+# ====================== Part III  => Redshift cluster configuration ======================
+  RedshiftSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Join [ " ", [ !Ref 'AWS::StackName', " - Redshift Security Group" ] ]
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref RedshiftClusterPort
+          ToPort: !Ref RedshiftClusterPort
+          SourceSecurityGroupId: !Ref BastionSecurityGroup
+          Description: 'Access to Bastion Host Security Group'
+        - !Ref 'AWS::NoValue'
+      Tags:
+        -
+          Key: Name
+          Value: !Join
+                 - '_'
+                 - - !Ref RedshiftRelatedTagName
+                   - !Sub '${AWS::StackName}-RedshiftSecurityGroup'
+        -
+          Key: Environment
+          Value: !Ref TagEnvironment
+        -
+          Key: Tier
+          Value: !Ref TagTier
+        -
+          Key: Confidentiality
+          Value: !Ref TagConfidentiality
+
+  RedshiftLoggingS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+    Condition: IsEnableLoggingToS3
+    Properties:
+      LifecycleConfiguration:
+        Rules:
+        - Id: RedshiftLogsArchivingToGlacier
+          Status: Enabled
+          ExpirationInDays: '30'
+          Transitions:
+            - TransitionInDays: '14'
+              StorageClass: Glacier
+      Tags:
+        -
+          Key: Name
+          Value: !Join [ "-", [ !Ref RedshiftRelatedTagName, !Ref 'AWS::StackName', "Redshift-Cluster-LoggingBucket" ] ]
+        -
+          Key: Environment
+          Value: !Ref TagEnvironment
+        -
+          Key: Tier
+          Value: !Ref TagTier
+        -
+          Key: Confidentiality
+          Value: !Ref TagConfidentiality
+
+  RedshiftLoggingS3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Condition: IsEnableLoggingToS3
+    Properties:
+      Bucket: !Ref RedshiftLoggingS3Bucket
+      PolicyDocument:
+        Statement:
+        - Principal:
+            AWS: !Join [ '', ['arn:aws:iam::', !FindInMap [RedshiftLoggingAccountIDRegionMap, !Ref 'AWS::Region', RSAccountID ] ,':user/logs']]
+          Effect: Allow
+          Action: 's3:GetBucketAcl'
+          Resource: !Sub '${RedshiftLoggingS3Bucket.Arn}'
+        - Principal:
+            AWS: !Join [ '', ['arn:aws:iam::', !FindInMap [RedshiftLoggingAccountIDRegionMap, !Ref 'AWS::Region', RSAccountID ] ,':user/logs']]
+          Effect: Allow
+          Action: 's3:PutObject'
+          Resource: !Sub '${RedshiftLoggingS3Bucket.Arn}/AWSLogs/*'
+
+  RedshiftClusterParameterGroup:
+    Type: 'AWS::Redshift::ClusterParameterGroup'
+    Properties:
+      Description: !Join [ " ", [ !Ref 'AWS::StackName', " - Redshift Cluster Parameter group" ]]
+      ParameterGroupFamily: redshift-1.0
+      Parameters:
+        - ParameterName: enable_user_activity_logging
+          ParameterValue: !If [IsProd, 'true', 'false']
+        - ParameterName: require_ssl
+          ParameterValue: 'true'
+        - ParameterName: auto_analyze
+          ParameterValue: 'true'
+        - ParameterName: statement_timeout
+          ParameterValue: '43200000'
+        - ParameterName: max_concurrency_scaling_clusters
+          ParameterValue: !Ref MaxConcurrentCluster
+        - ParameterName: "wlm_json_configuration"
+          ParameterValue: "[ {\"query_group\" : [ ], \"query_group_wild_card\" : 0, \"user_group\" : [ ], \"user_group_wild_card\" : 0, \"concurrency_scaling\" : \"auto\", \"rules\" : [ { \"rule_name\" : \"DiskSpilling\", \"predicate\" : [ { \"metric_name\" : \"query_temp_blocks_to_disk\", \"operator\" : \">\",  \"value\" : 100000} ], \"action\" : \"log\", \"value\" : \"\"}, { \"rule_name\" : \"RowJoining\", \"predicate\" : [ { \"metric_name\" : \"join_row_count\", \"operator\" : \">\", \"value\" : 1000000000 } ], \"action\" : \"log\", \"value\" : \"\" } ], \"auto_wlm\" : true}, {\"short_query_queue\" : true} ]"
+      Tags:
+        -
+          Key: Name
+          Value: !Join [ "-", [ !Ref RedshiftRelatedTagName, !Ref 'AWS::StackName', "Primary Cluster Parameter group" ] ]
+        -
+          Key: Environment
+          Value: !Ref TagEnvironment
+        -
+          Key: Tier
+          Value: !Ref TagTier
+        -
+          Key: Confidentiality
+          Value: !Ref TagConfidentiality
+
+  RedshiftClusterSubnetGroup:
+    Type: 'AWS::Redshift::ClusterSubnetGroup'
+    Properties:
+      Description: Cluster subnet group
+      SubnetIds: !Split [',', !Join [',', [!Ref SubnetAPrivate, !Ref SubnetBPrivate, !Ref SubnetCPrivate]] ]
+      Tags:
+        -
+          Key: Name
+          Value: !Join [ "-", [ !Ref RedshiftRelatedTagName, !Ref 'AWS::StackName', "Primary Redshift Cluster Subnet group" ] ]
+        -
+          Key: Environment
+          Value: !Ref TagEnvironment
+        -
+          Key: Tier
+          Value: !Ref TagTier
+        -
+          Key: Confidentiality
+          Value: !Ref TagConfidentiality
+
+  RedshiftCluster:
+    Type: 'AWS::Redshift::Cluster'
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      ClusterType: !If [RedshiftSingleNodeClusterCondition, "single-node", "multi-node"]
+      ClusterIdentifier: !Join ["-", [!Ref DatabaseName, !Ref 'AWS::StackName']]
+      NumberOfNodes: !If [RedshiftSingleNodeClusterCondition, !Ref "AWS::NoValue", !Ref NumberOfNodes]
+      NodeType: !Ref NodeType
+      DBName: !Ref DatabaseName
+      KmsKeyId: !If [IsEncryptionAtRest, !Ref kmskey, !Ref "AWS::NoValue"]
+      Encrypted: !Ref EncryptionAtRest
+      Port: !Ref RedshiftClusterPort
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      ClusterParameterGroupName: !Ref RedshiftClusterParameterGroup
+      SnapshotIdentifier: !If [IsSnapshotSpecified, !Ref SnapshotIdentifier, !Ref "AWS::NoValue"]
+      OwnerAccount: !If [IsSnapshotAccountSpecified, !Ref SnapshotAccountNumber, !Ref "AWS::NoValue"]
+      VpcSecurityGroupIds:
+        - !Ref RedshiftSecurityGroup
+      PreferredMaintenanceWindow: !Ref Maintenancewindow
+      AutomatedSnapshotRetentionPeriod: !If [IsProd, 35, 8]
+      PubliclyAccessible: 'false'
+      ClusterSubnetGroupName: !Ref RedshiftClusterSubnetGroup
+      LoggingProperties: !If
+          - IsEnableLoggingToS3
+          - BucketName: !Ref RedshiftLoggingS3Bucket
+            S3KeyPrefix: 'AWSLogs'
+          - !Ref 'AWS::NoValue'
+      IamRoles:
+          - !If
+              - IsConfigureRedshiftIAMRole
+              - !GetAtt MyRedshiftIAMRole.Arn
+              - !Ref 'AWS::NoValue'
+      Tags:
+        -
+          Key: Name
+          Value: !Join [ "-", [ !Ref RedshiftRelatedTagName, !Ref 'AWS::StackName', "Redshift-Cluster" ] ]
+        -
+          Key: Environment
+          Value: !Ref TagEnvironment
+        -
+          Key: Tier
+          Value: !Ref TagTier
+        -
+          Key: Confidentiality
+          Value: !Ref TagConfidentiality
+
+  S3BucketForRedshift:
+    Condition: IsConfigureRedshiftIAMRole
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3BucketForRedshiftIAMRole
+      # Enable Block Public Access
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      # Server Side Encryption
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # Tagging
+      Tags:
+        -
+          Key: Environment
+          Value: !Ref TagEnvironment
+        -
+          Key: Tier
+          Value: !Ref TagTier
+        -
+          Key: Confidentiality
+          Value: !Ref TagConfidentiality
+    DeletionPolicy: Delete # set <Retain> when production
+
+  S3BucketPolicy:
+    Condition: IsConfigureRedshiftIAMRole
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: !Sub '${RedshiftRelatedTagName}_S3BucketPolicy'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: VisualEditor1
+          Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+            - s3:ListBucketMultipartUploads
+            - s3:AbortMultipartUpload
+            - s3:CreateBucket
+            - s3:ListBucket
+            - s3:GetBucketLocation
+            - s3:ListMultipartUploadParts
+          Resource:
+            - !Sub 'arn:aws:s3:::${S3BucketForRedshift}/*'
+            - !Sub 'arn:aws:s3:::${S3BucketForRedshift}/'
+        - Sid: VisualEditor2
+          Effect: Allow
+          Action:
+            - s3:ListBucket
+            - s3:GetObject
+          Resource:
+            - !Sub 'arn:aws:s3:::ecv-tutorial-preparation/*'
+            - !Sub 'arn:aws:s3:::ecv-tutorial-preparation'
+
+  AWSGlueServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - glue.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref S3BucketPolicy
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Path: "/"
+
+  GlueCatalogDB:
+    Condition: IsGlueCatalogName
+    Type: 'AWS::Glue::Database'
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+          Name: !Ref GlueCatalogDatabase
+          Description: !Join [ " ", ["AWS Glue Catalog database from Stack ", !Ref 'AWS::StackName'] ]
+
+  GlueCrawler:
+    Condition: IsGlueCatalogName
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: !Sub '${RedshiftRelatedTagName}_s3_crawler'
+      Role: !GetAtt AWSGlueServiceRole.Arn
+      DatabaseName: !Ref GlueCatalogDB
+      Targets:
+        S3Targets:
+          - Path: !Sub '${S3BucketForRedshift}/'
+      SchemaChangePolicy:
+        UpdateBehavior: "UPDATE_IN_DATABASE"
+
+  MyRedshiftIAMRole:
+    Type: 'AWS::IAM::Role'
+    Condition: IsConfigureRedshiftIAMRole
+    Properties:
+      RoleName: !Join [ "-", [!Ref 'AWS::StackName', "RedshiftSpectrumRole"] ]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "redshift.amazonaws.com"
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        -
+          PolicyName: !Join [ "-", [!Ref 'AWS::StackName', "Spectrum-Glue-Access-Policy"] ]
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                    - s3:GetBucketLocation
+                    - s3:GetObject
+                    - s3:ListMultipartUploadParts
+                    - s3:ListBucket
+                    - s3:ListBucketMultipartUploads
+                Resource:
+                    - !Join ['', ["arn:aws:s3:::", !Ref S3BucketForRedshiftIAMRole]]
+                    - !Join ['', ["arn:aws:s3:::", !Ref S3BucketForRedshiftIAMRole, "/*"]]
+              -
+                Effect: Allow
+                Action:
+                    - glue:CreateDatabase
+                    - glue:DeleteDatabase
+                    - glue:GetDatabase
+                    - glue:GetDatabases
+                    - glue:UpdateDatabase
+                    - glue:CreateTable
+                    - glue:DeleteTable
+                    - glue:BatchDeleteTable
+                    - glue:UpdateTable
+                    - glue:GetTable
+                    - glue:GetTables
+                    - glue:BatchCreatePartition
+                    - glue:CreatePartition
+                    - glue:DeletePartition
+                    - glue:BatchDeletePartition
+                    - glue:UpdatePartition
+                    - glue:GetPartition
+                    - glue:GetPartitions
+                    - glue:BatchGetPartition
+                    - logs:*
+                Resource:
+                    - "*"
+
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref NotificationList
+          Protocol: email
+      TopicName: !Sub '${RedshiftRelatedTagName}_Redshift_Alarm'
+
+  DiskSpacealarmredshift:
+    Type: 'AWS::CloudWatch::Alarm'
+    DependsOn: RedshiftCluster
+    Properties:
+      MetricName: !Join
+        - ''
+        - - !Ref RedshiftCluster
+          - High-PercentageDiskSpaceUsed
+      AlarmDescription: !Join
+        - ''
+        - - DiskSpace Utilization > 85% for
+          - !Ref RedshiftCluster
+      Namespace: AWS/Redshift
+      Statistic: Average
+      Period: '300'
+      EvaluationPeriods: '3'
+      Threshold: '85'
+      AlarmActions:
+        - !Ref SNSTopic
+      Dimensions:
+        - Name: ClusterIdentifier
+          Value: !Ref RedshiftCluster
+      ComparisonOperator: GreaterThanThreshold
+      Unit: Percent
+
+  HighCPUutilizationalarmredshift:
+    Type: 'AWS::CloudWatch::Alarm'
+    DependsOn: RedshiftCluster
+    Condition: IsProd
+    Properties:
+      MetricName: !Join
+        - ''
+        - - !Ref RedshiftCluster
+          - High-CPUUtilization
+      AlarmDescription: !Join
+        - ''
+        - - CPUUtilization > 95% for last 15 min for cluster
+          - !Ref RedshiftCluster
+      Namespace: AWS/Redshift
+      Statistic: Average
+      Period: '300'
+      EvaluationPeriods: '3'
+      Threshold: '95'
+      AlarmActions:
+        - !Ref SNSTopic
+      Dimensions:
+        - Name: ClusterIdentifier
+          Value: !Ref RedshiftCluster
+      ComparisonOperator: GreaterThanThreshold
+      Unit: Percent
+
+Outputs:
+  # Part I => VPC configuration
+  StackName:
+    Description: 'Stack name'
+    Value: !Sub '${AWS::StackName}'
+
+  VPC:
+    Description: 'VPC'
+    Value: !Ref VPC
+    Export:
+      Name: !Sub '${AWS::StackName}-VPC'
+
+  CidrClassB:
+    Description: 'Class B VPC CIDR'
+    Value: !Ref CidrClassB
+    Export:
+      Name: !Sub '${AWS::StackName}-CidrClassB'
+
+  CidrBlock:
+    Description: 'The set of IP addresses for the VPC'
+    Value: !GetAtt 'VPC.CidrBlock'
+    Export:
+      Name: !Sub '${AWS::StackName}-CidrBlock'
+
+  AZs:
+    Description: 'AZs'
+    Value: 3
+    Export:
+      Name: !Sub '${AWS::StackName}-AZs'
+
+  AZA:
+    Description: 'AZ of A'
+    Value: !Select [0, !GetAZs '']
+    Export:
+      Name: !Sub '${AWS::StackName}-AZA'
+
+  AZB:
+    Description: 'AZ of B'
+    Value: !Select [1, !GetAZs '']
+    Export:
+      Name: !Sub '${AWS::StackName}-AZB'
+
+  AZC:
+    Description: 'AZ of C'
+    Value: !Select [2, !GetAZs '']
+    Export:
+      Name: !Sub '${AWS::StackName}-AZC'
+
+  SubnetsPublic:
+    Description: 'Subnets public'
+    Value: !Join [',', [!Ref SubnetAPublic, !Ref SubnetBPublic, !Ref SubnetCPublic]]
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetsPublic'
+
+  SubnetsPrivate:
+    Description: 'Subnets private'
+    Value: !Join [',', [!Ref SubnetAPrivate, !Ref SubnetBPrivate, !Ref SubnetCPrivate]]
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetsPrivate'
+
+  RouteTablesPublic:
+    Description: 'Route tables public'
+    Value: !Ref RouteTablePublic
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTablePublic'
+
+  RouteTablesPrivate:
+    Description: 'Route tables private'
+    Value: !Join [',', [!Ref RouteTableAPrivate, !Ref RouteTableBPrivate, !Ref RouteTableCPrivate]]
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTablesPrivate'
+
+  SubnetAPublic:
+    Description: 'Subnet A public'
+    Value: !Ref SubnetAPublic
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetAPublic'
+
+  SubnetAPrivate:
+    Description: 'Subnet A private'
+    Value: !Ref SubnetAPrivate
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetAPrivate'
+
+  RouteTableAPrivate:
+    Description: 'Route table A private'
+    Value: !Ref RouteTableAPrivate
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableAPrivate'
+
+  SubnetBPublic:
+    Description: 'Subnet B public'
+    Value: !Ref SubnetBPublic
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetBPublic'
+
+  SubnetBPrivate:
+    Description: 'Subnet B private'
+    Value: !Ref SubnetBPrivate
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetBPrivate'
+
+  RouteTableBPrivate:
+    Description: 'Route table B private'
+    Value: !Ref RouteTableBPrivate
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableBPrivate'
+
+  SubnetCPublic:
+    Description: 'Subnet C public'
+    Value: !Ref SubnetCPublic
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetCPublic'
+
+  SubnetCPrivate:
+    Description: 'Subnet C private'
+    Value: !Ref SubnetCPrivate
+    Export:
+      Name: !Sub '${AWS::StackName}-SubnetCPrivate'
+
+  RouteTableCPrivate:
+    Description: 'Route table C private'
+    Value: !Ref RouteTableCPrivate
+    Export:
+      Name: !Sub '${AWS::StackName}-RouteTableCPrivate'
+
+  S3VPCEndpoint:
+    Description: S3 VPC Endpoint
+    Value: !Ref S3VPCEndpoint
+    Export:
+      Name: !Sub '${AWS::StackName}-S3VPCEndpoint'
+  # Part II => Bastion configuration
+  BastionAutoScalingGroup:
+    Description: Auto Scaling Group Reference ID
+    Value: !Ref BastionAutoScalingGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-BastionAutoScalingGroup'
+
+  EIP:
+    Description: The public IP address of the SSH bastion host/instance
+    Value: !Ref EIP
+    Export:
+      Name: !Sub '${AWS::StackName}-EIP'
+
+  SSHCommand:
+    Description: SSH command line
+    Value: !Join
+             - ''
+             - - 'ssh -i "'
+               - !Ref KeyPairName
+               - '.pem" '
+               - 'ec2-user@'
+               - !Ref EIP
+
+  CloudWatchLogs:
+    Description: CloudWatch Logs GroupName. Your SSH logs will be stored here.
+    Value: !Ref BastionMainLogGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-CloudWatchLogs'
+
+  BastionSecurityGroupID:
+    Description: Use this Security Group to reference incoming traffic from the SSH bastion host/instance
+    Value: !Ref BastionSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-BastionSecurityGroupID'
+
+  # Part III => Redshift configuration
+  RedshiftClusterEndpoint:
+    Description: Redshift Cluster endpoint
+    Value: !Sub "${RedshiftCluster.Endpoint.Address}:${RedshiftCluster.Endpoint.Port}"
+    Export:
+      Name: !Sub '${AWS::StackName}-RedshiftClusterEndpoint'
+
+  PSQLCommandLine:
+    Description: PSQL Command Line
+    Value: !Join
+             - ''
+             - - 'psql -h '
+               - !GetAtt 'RedshiftCluster.Endpoint.Address'
+               - ' -p '
+               - !GetAtt 'RedshiftCluster.Endpoint.Port'
+               - ' -U '
+               - !Ref MasterUsername
+               - ' -d '
+               - !Ref DatabaseName
+
+  RedshiftParameterGroupName:
+    Description: Name of the Redshift Parameter Group
+    Value: !Ref RedshiftClusterParameterGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-RedshiftParameterGroupName'
+
+  RedshiftDatabaseName:
+    Description: Name of the Redshift Database
+    Value: !If
+              - IsSnapshotSpecified
+              - !Join [ ' ',['Check name of database from which the Snapshot', !Ref SnapshotIdentifier , ' was originally taken.']]
+              - !Ref DatabaseName
+    Export:
+      Name: !Sub '${AWS::StackName}-RedshiftDatabaseName'
+
+  RedshiftUsername:
+    Value: !Ref MasterUsername
+    Export:
+      Name: !Sub '${AWS::StackName}-RedshiftUsername'
+
+  RedshiftLoggingS3Bucket:
+    Description: Amazon S3 bucket created for audit logging
+    Condition: IsEnableLoggingToS3
+    Value: !Ref RedshiftLoggingS3Bucket
+    Export:
+      Name: !Sub '${AWS::StackName}-RedshiftLoggingS3Bucket'
+
+  RedshiftClusterIAMRole:
+    Description: IAM Role created and assigned to Redshift cluster
+    Condition: IsConfigureRedshiftIAMRole
+    Value: !GetAtt MyRedshiftIAMRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-RedshiftClusterIAMRole'
+
+  GlueCatalogDBName:
+    Description: AWS Glue Catalog Database Name
+    Condition: IsGlueCatalogName
+    Value: !Ref GlueCatalogDB
+    Export:
+      Name: !Sub '${AWS::StackName}-GlueCatalogDBName'
+
+  S3BucketForRedshift:
+    Description: Amazon S3 bucket created for Redshift Spectrum
+    Condition: IsConfigureRedshiftIAMRole
+    Value: !Ref S3BucketForRedshift
+    Export:
+      Name: !Sub '${AWS::StackName}-S3BucketForRedshift'
+
+  SQLCreateExternalSchemaCommand:
+    Description: SQL Command using Redshift spectrum
+    Value: !Join
+              - ''
+              - - "create external schema spectrum_ex from data catalog"
+                - |
+                - !Sub "database '${GlueCatalogDB}' "
+                - |
+                - "iam_role "
+                - "'!GetAtt MyRedshiftIAMRole.Arn'"
+                - |
+                - !Sub "region '${AWS::Region}'"
+
+# -- create external schema spectrum_ex from data catalog
+# -- database '!Ref GlueCatalogDB'
+# -- iam_role '!Ref MyRedshiftIAMRole'
+# -- region '!Ref AWS::Region';

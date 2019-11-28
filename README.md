@@ -781,10 +781,20 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 
     {"CloudFormation": "Infrastructure as code"}
 
-* [Level 101 - ](./cloudformation/vpc_lab_101/) 
-* [Level 201 - ](./cloudformation/vpc_lab_101/)
-* [Level 301 - ](./cloudformation/vpc_lab_101/)
-* [Level 401 - ](./cloudformation/redshift_lab_401/)
+
+
+* [Level 101 - VPC basic Configuration](./cloudformation/vpc_lab_101/)
+    * about 10 mins
+* [Level 201 - ](./cloudformation/_lab_201/)
+    * about 20 mins
+* [Level 301 - Data Lake Quick Start Template](./cloudformation/datalake_quickstart_lab_301/)
+    * about 30 mins
+* [Level 401 - Automate Amazon Redshift cluster creation](./cloudformation/redshift_lab_401/)
+    * about 40 mins - 1 hr
+
+**Other Resources**
+* [AWS CloudFormation samples](https://docs.aws.amazon.com/en_us/AWSCloudFormation/latest/UserGuide/sample-templates-services-us-west-2.html)
+* [AWS Quick Start samples](https://aws.amazon.com/tw/cloudformation/resources/templates/)
 
 ## References
 * [AWS Well-Architected Framework Whitepaper](https://d1.awsstatic.com/whitepapers/architecture/AWS_Well-Architected_Framework.pdf)
