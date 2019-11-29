@@ -164,6 +164,12 @@ Enter your mail address to receive the notification
 
 * CloudFormation will start to build all resources (stack creation would take 10 - 20 mins depends on the Redshift)
 
+### It's Coffee time :))
+
+![latte.jpeg](./img/latte.jpeg)
+
+***
+
 ![pending.png](./img/pending.png)
 
 Check the AWS CloudFormation Resources section to see all the components set up by this stack 
@@ -237,6 +243,8 @@ Examine the new resources via console
 You can use the following options to run the query
 * **Command line interface**
     * Keep using your terminal which already login into psql client
+        * Remember to add **`;`** at the end of SQL command 
+
 * **Redshift query editor** 
     * Using the left navigation pane on the Amazon Redshift console, navigate to the Query Editor.
     * In the **Credentials** dialog box, in the **Cluster** drop-down list, choose the cluster name.
@@ -245,12 +253,12 @@ You can use the following options to run the query
     * Choose **Connect**
 
 
-*Via command line*
-
 * On the CloudFormation Dashboard, choose **Outputs** and note the **SQLCreateExternalSchemaCommand** parameter value
 
-* Run a SQL command to create an external schema for Redshift at first
+![spectrum_command.png](./img/spectrum_command.png)
 
+* Run SQL command above to create an external schema for Redshift at first
+    
         create external schema spectrum_ex from data catalog
         database '<GlueCatalogDBName>'
         iam_role '<RedshiftIAMRoleArn>'
@@ -389,6 +397,10 @@ Select **Query results** and choose **Visualize**
 * Click **Delete** to remove the stack along with all resources
 
 * **The deletion time will take 10 mins to 20 mins depends on the size of your Redshift cluster**
+
+### Embrace another coffee time :))
+
+![latteeee.gif](./img/latteeee.gif)
 
 ### Lab References
 * [AWS Big Data Blog](https://aws.amazon.com/tw/blogs/big-data/automate-amazon-redshift-cluster-creation-using-aws-cloudformation/)

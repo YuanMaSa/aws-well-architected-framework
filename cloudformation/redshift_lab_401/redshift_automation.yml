@@ -1858,10 +1858,12 @@ Outputs:
               - ''
               - - "create external schema spectrum_ex from data catalog"
                 - |
-                - !Sub "database '${GlueCatalogDB}' "
+                - !Sub " database '${GlueCatalogDB}'"
                 - |
-                - "iam_role "
-                - "'!GetAtt MyRedshiftIAMRole.Arn'"
+                - " iam_role"
+                - " '"
+                - !GetAtt MyRedshiftIAMRole.Arn
+                - "' "
                 - |
                 - !Sub "region '${AWS::Region}'"
 
