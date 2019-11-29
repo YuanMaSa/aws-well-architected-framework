@@ -8,7 +8,7 @@ This lab using a Cloudformation Stack to generate the following items:
 * Highly available SSH bastion host
 * Amazon Redshift Cluster
 
-**This lab would take you 40 mins to 1 hr to complete all the component and setting up the resources** 
+**This lab would take you 40 mins to 1 hr to complete all the components and setting up the resources** 
 
 ![LabArchitecture.png](./img/LabArchitecture.png)
 
@@ -404,3 +404,4 @@ Select **Query results** and choose **Visualize**
 
 ### Lab References
 * [AWS Big Data Blog](https://aws.amazon.com/tw/blogs/big-data/automate-amazon-redshift-cluster-creation-using-aws-cloudformation/)
+* [Modular Architecture for Amazon Redshift](https://aws-quickstart.s3.amazonaws.com/quickstart-amazon-redshift/doc/modular-architecture-for-amazon-redshift.pdf)

@@ -795,6 +795,7 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 **Other Resources**
 * [AWS CloudFormation samples](https://docs.aws.amazon.com/en_us/AWSCloudFormation/latest/UserGuide/sample-templates-services-us-west-2.html)
 * [AWS Quick Start samples](https://aws.amazon.com/tw/cloudformation/resources/templates/)
+* [Advanced CloudFormation design for different solutions](https://aws.amazon.com/solutions/)
 
 ## References
 * [AWS Well-Architected Framework Whitepaper](https://d1.awsstatic.com/whitepapers/architecture/AWS_Well-Architected_Framework.pdf)

@@ -1,0 +1,650 @@
+Description:
+  This template deploys the resources for data lake quickstart template
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Prefix Configuration"
+        Parameters:
+          - PrefixName
+
+      -
+        Label:
+          default: "VPC Configuration"
+        Parameters:
+          - VpcCIDR
+          - PublicSubnet1CIDR
+          - PublicSubnet2CIDR
+          - PrivateSubnet1CIDR
+          - PrivateSubnet2CIDR
+
+      -
+        Label:
+          default: "EC2 <Data Transfer Server> Configuration"
+        Parameters:
+          - KeyName
+          - InstanceType
+
+      -
+        Label:
+          default: "S3 <Data Lake Storage> Configuration"
+        Parameters:
+          - S3DataLakeBucketName
+
+    ParameterLabels:
+
+      PrefixName:
+        default: "Prefix Name"
+
+      VpcCIDR:
+        default: "VPC CIDR"
+
+      PublicSubnet1CIDR:
+        default: "Public Subnet 1 CIDR"
+
+      PublicSubnet2CIDR:
+        default: "Public Subnet 2 CIDR"
+
+      PrivateSubnet1CIDR:
+        default: "Private Subnet 1 CIDR"
+
+      PrivateSubnet2CIDR:
+        default: "Private Subnet 2 CIDR"
+
+      KeyName:
+        default: "EC2 Key Pair"
+
+      InstanceType:
+        default: "EC2 Instance Type"
+
+      S3DataLakeBucketName:
+        default: "S3 Data Lake Bucket Name"
+
+
+Parameters:
+
+  PrefixName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: dna
+    AllowedPattern: ^[a-z0-9_.]+$
+    ConstraintDescription: Malformed input-Parameter PrefixName must only contain lowercase letters and numbers or underscore (_)
+
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for the VPC of Batch Job
+    Type: String
+    AllowedPattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$
+    ConstraintDescription: Invalid CIDR format
+    Default: 10.66.89.0/24
+
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    AllowedPattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$
+    ConstraintDescription: Invalid CIDR format
+    Default: 10.66.89.0/28
+
+  PublicSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    AllowedPattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$
+    ConstraintDescription: Invalid CIDR format
+    Default: 10.66.89.32/28
+
+  PrivateSubnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    AllowedPattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$
+    ConstraintDescription: Invalid CIDR format
+    Default: 10.66.89.128/28
+
+  PrivateSubnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    AllowedPattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$
+    ConstraintDescription: Invalid CIDR format
+    Default: 10.66.89.160/28
+
+  KeyName:
+    Description: Choose an existing key pair.
+    Type: 'AWS::EC2::KeyPair::KeyName'
+
+  InstanceType:
+    Description: Select one of the instance types
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+
+  S3DataLakeBucketName:
+    Description: Please enter a <UNIQUE> bucket name to create a data repository for S3
+    Type: String
+    Default: ecv-data-lake-main01
+    AllowedPattern: ^[a-z0-9.-]+$
+    ConstraintDescription: Malformed input-Parameter S3DataLakeBucket must be unique and only contain lowercase letters and numbers
+
+
+Resources:
+
+  # VPC with multi-AZ
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref PrefixName
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+  # IGW
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref PrefixName
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # IGW Attachment
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${PrefixName} Public Subnet (AZ1)
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${PrefixName} Public Subnet (AZ2)
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${PrefixName} Private Subnet (AZ1)
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${PrefixName} Private Subnet (AZ2)
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # NAT Gateway EIP
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  # NAT Gateway
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: !Ref PrefixName
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # Route Table for public subnet
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${PrefixName} Public Routes
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # Route for public subnet
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  # Route table attachment for public subnet 1
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  # Route table attachment for public subnet 2
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  # Route Table for private subnet 1
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${PrefixName} Private Routes (AZ1)
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # Route for private subnet 1
+  DefaultPrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  # Route table attachment for private subnet 1
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
+
+  # Route Table for private subnet 2
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${PrefixName} Private Routes (AZ2)
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # Route for private subnet 2
+  DefaultPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  # Route table attachment for private subnet 2
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
+
+  # NACL for public subnets
+  PublicNetworkAcl:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${PrefixName} NACL (Public Subnets)
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # Default Inbound Rule for NACL of public subnets
+  PublicNetworkAclEntryInbound:
+    Type: AWS::EC2::NetworkAclEntry
+    DependsOn: PublicNetworkAcl
+    Properties:
+      NetworkAclId: !Ref PublicNetworkAcl
+      RuleNumber: "100"
+      Protocol: "-1"
+      RuleAction: allow
+      Egress: "false"
+      CidrBlock: 0.0.0.0/0
+
+  # Default Outbound Rule for NACL of public subnets
+  PublicNetworkAclEntryOutbound:
+    Type: AWS::EC2::NetworkAclEntry
+    DependsOn: PublicNetworkAcl
+    Properties:
+      NetworkAclId: !Ref PublicNetworkAcl
+      RuleNumber: "100"
+      Protocol: "-1"
+      RuleAction: allow
+      Egress: "true"
+      CidrBlock: 0.0.0.0/0
+
+  # NACL association for public subnet 1
+  PublicSubnet1NetworkAclAssociation:
+     Type: AWS::EC2::SubnetNetworkAclAssociation
+     Properties:
+       SubnetId: !Ref PublicSubnet1
+       NetworkAclId: !Ref PublicNetworkAcl
+
+  # NACL association for public subnet 2
+  PublicSubnet2NetworkAclAssociation:
+     Type: AWS::EC2::SubnetNetworkAclAssociation
+     Properties:
+       SubnetId: !Ref PublicSubnet2
+       NetworkAclId: !Ref PublicNetworkAcl
+
+  # NACL for private subnets
+  PrivateNetworkAcl:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${PrefixName} NACL (Private Subnets)
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # Default Inbound Rule for NACL of private subnets
+  PrivateNetworkAclEntryInbound:
+    Type: AWS::EC2::NetworkAclEntry
+    DependsOn: PrivateNetworkAcl
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkAcl
+      RuleNumber: "100"
+      Protocol: "-1"
+      RuleAction: allow
+      Egress: "false"
+      CidrBlock: 0.0.0.0/0
+
+  # Default Outbound Rule for NACL of private subnets
+  PrivateNetworkAclEntryOutbound:
+    Type: AWS::EC2::NetworkAclEntry
+    DependsOn: PrivateNetworkAcl
+    Properties:
+      NetworkAclId: !Ref PrivateNetworkAcl
+      RuleNumber: "100"
+      Protocol: "-1"
+      RuleAction: allow
+      Egress: "true"
+      CidrBlock: 0.0.0.0/0
+
+  # NACL association for private subnet 1
+  PrivateSubnet1NetworkAclAssociation:
+     Type: AWS::EC2::SubnetNetworkAclAssociation
+     Properties:
+       SubnetId: !Ref PrivateSubnet1
+       NetworkAclId: !Ref PrivateNetworkAcl
+
+  # NACL association for private subnet 2
+  PrivateSubnet2NetworkAclAssociation:
+     Type: AWS::EC2::SubnetNetworkAclAssociation
+     Properties:
+       SubnetId: !Ref PrivateSubnet2
+       NetworkAclId: !Ref PrivateNetworkAcl
+
+  # SecurityGroup for VPC
+  VPCSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${PrefixName}_sg'
+      GroupDescription: "Security group with default rule for batch job"
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # Security Group Ingress
+  SecurityGroupIngress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: VPCSecurityGroup
+    Properties:
+      GroupId: !GetAtt VPCSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !GetAtt VPCSecurityGroup.GroupId
+      Description: "SG refer to itself"
+
+  # EC2 Instance
+  Ec2Server:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: ami-07539a31f72d244e7
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref Ec2InstanceProfile
+      SecurityGroupIds:
+        - !Ref VPCSecurityGroup
+      SubnetId: !Ref PrivateSubnet1
+      Tags:
+        - Key: "Name"
+          Value: !Sub '${PrefixName} Data Lake Server'
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          aws s3 cp s3://ecv-tutorial-preparation/spectrum_sample_data/ s3://${S3DataRepositoryBucket}/ --sse --recursive --region ${AWS::Region}
+          aws glue start-crawler --name ${GlueCrawler} --region ${AWS::Region}
+
+  # EC2 Profile
+  EC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: Ec2InstanceRole
+
+  # EC2 Instance Profile
+  Ec2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+        - Ref: Ec2InstanceRole
+
+  # EC2 Instance Role
+  Ec2InstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref S3DataRepositoryPolicy
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # =============================S3 & Glue=============================
+
+  # S3 bucket of data repository
+  S3DataRepositoryBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref S3DataLakeBucketName
+      # Enable Block Public Access
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      # Server Side Encryption
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # Tagging
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+    DeletionPolicy: Delete # set <Retain> when production
+
+  # Create a managed policy for S3 data repository and script access
+  S3DataRepositoryPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    DependsOn: S3DataRepositoryBucket
+    Properties:
+      ManagedPolicyName: !Sub '${PrefixName}_S3DataLakePolicy'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: VisualEditor1
+          Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:ListBucket
+            - s3:DeleteObject
+            - s3:GetBucketAcl
+            - s3:GetBucketLocation
+            - s3:GetObjectTagging
+            - s3:PutObjectTagging
+          Resource:
+            - !Sub 'arn:aws:s3:::${S3DataRepositoryBucket}/*'
+            - !Sub 'arn:aws:s3:::${S3DataRepositoryBucket}/'
+        - Sid: VisualEditor2
+          Effect: Allow
+          Action:
+            - s3:ListBucket
+            - s3:GetObject
+          Resource:
+            - !Sub 'arn:aws:s3:::ecv-tutorial-preparation/*'
+            - !Sub 'arn:aws:s3:::ecv-tutorial-preparation'
+
+  # Glue Service role
+  AWSGlueServiceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - glue.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - Ref: S3DataRepositoryPolicy
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Path: "/"
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake quickstart"
+
+  # Glue Database
+  GlueDatabase:
+    Type: "AWS::Glue::Database"
+    Properties:
+      DatabaseInput:
+        Description: !Sub 'Glue database for ${PrefixName}'
+        Name: !Sub '${PrefixName}_db'
+        Parameters: {"Project": "Data Lake quickstart"}
+      CatalogId: !Ref AWS::AccountId
+
+  # Glue Crawler
+  GlueCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: !Sub '${PrefixName}_datalake_crawler'
+      Role: !GetAtt AWSGlueServiceRole.Arn
+      DatabaseName: !Ref GlueDatabase
+      Targets:
+        S3Targets:
+          - Path: !Sub '${S3DataRepositoryBucket}/'
+      SchemaChangePolicy:
+        UpdateBehavior: "UPDATE_IN_DATABASE"
+      Tags: {"Project": "Data Lake quickstart"}
+
+Outputs:
+
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref VPC
+
+  PublicSubnets:
+    Description: A list of the public subnets
+    Value: !Join [ ",", [ !Ref PublicSubnet1, !Ref PublicSubnet2 ]]
+
+  PrivateSubnets:
+    Description: A list of the private subnets
+    Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ]]
+
+  PublicSubnet1:
+    Description: A reference to the public subnet in the 1st Availability Zone
+    Value: !Ref PublicSubnet1
+
+  PublicSubnet2:
+    Description: A reference to the public subnet in the 2nd Availability Zone
+    Value: !Ref PublicSubnet2
+
+  PrivateSubnet1:
+    Description: A reference to the private subnet in the 1st Availability Zone
+    Value: !Ref PrivateSubnet1
+
+  PrivateSubnet2:
+    Description: A reference to the private subnet in the 2nd Availability Zone
+    Value: !Ref PrivateSubnet2
+
+  VPCSecurityGroup:
+    Description: Security group with default rule
+    Value: !Ref VPCSecurityGroup
+
+  SecurityGroupIngress:
+    Description: Inbound rule of Security group
+    Value: !Ref SecurityGroupIngress
+
+  S3DataRepositoryBucket:
+    Description: Name of data repository bucket
+    Value: !Ref S3DataRepositoryBucket
+
+  S3DataRepositoryPolicy:
+    Description: ManagedPolicy for S3 DataRepositoryBucket
+    Value: !Ref S3DataRepositoryPolicy
+
+  Ec2Server:
+    Description: EC2 Server
+    Value: !Ref Ec2Server
+
+  Ec2InstanceRole:
+    Description: EC2 Instance Role
+    Value: !Ref Ec2InstanceRole
