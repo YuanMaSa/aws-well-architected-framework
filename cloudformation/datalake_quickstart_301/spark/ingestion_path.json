@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "path": "s3://ecv-tutorial-preparation/zoe/Taxi_for_2months/Green/"
+  },
+  {
+    "id": 2,
+    "path": "s3://ecv-tutorial-preparation/zoe/Taxi_for_2months/Yellow/"
+  }
+]

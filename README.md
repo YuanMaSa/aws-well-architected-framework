@@ -1,7 +1,7 @@
 
 # Prominent data platform design with AWS well-architected framework
 
-To solve the problem of data silos, many companies try to embrace the advantageous data solution to develop their data platform. AWS is one of the essential components for company to build a prominent data platform that provides scalable and reliable approaches for the customer. Nevertheless, a few pieces of concept need to be established before design your architecture on AWS to make architectural trade-offs as your designs evolve. 
+To solve the problem of data silos, many companies try to embrace the beneficial data solution to develop their data platform. AWS is one of the essential components for the company to build a prominent data platform that provides scalable and reliable approaches for the customer. Nevertheless, a few pieces of concept need to be established before design your architecture on AWS to make architectural trade-offs as your plans evolve. 
 
 ![data_lake.jpg](./img/data_lake.jpg)
 
@@ -637,7 +637,30 @@ This section will introduce the AWS big data services and elucidate the best pra
     * RDBMS
 
 ***
+### <span style="color:#007697"> Comparison Table </span>
 
+Service Name  |    Feature   | Performance  | Use Case  |
+--------------|:-------------|:-------------|:----------|
+Redshift      |       Petabyte-scale data warehouse      |      Fast query performance on a dataset to the GB to EB scale, massively parallel processing (MPP)       |     PT-scale data warehousing, EB-scale data lake analysis, Infinite Parallelism      |
+Athena        |       An interactive query service (Serverless)       |       Optimized for high-speed performance with S3, Automatically executes queries in parallel     |     Query the data (CSV, JSON, ORC, Parquet) from your data lake with high performance      |
+EMR           |       Managed cluster platform that simplifies running big data frameworks (Hadoop, Spark)     |      Easily scale resources, EMR clusters automatically manage computing resources to meet the performance needs        |     Massive data processing, ETL job      |
+Glue          |       Fully managed acquisition, transformation, and loading (ETL) service       |      Glue job performance depends on DPUs        |     Data catalog, metadata store      |
+
+Difference between Redshift and Athena
+
+Service Name  |    Setup   | Query Engine | Query Speed |   Partitioning   | Data Formats |    UDF  |   Security | Pricing   |  
+--------------|:-------------|:-------------|:------------|:------------|:------------|:------------|:------------|:------------|
+Redshift      |       Need to initialize and config cluster, and load data       |       PostgreSQL       |      Faster than Athena in joins (complex joins and inner query)       |   Does not support table partitioning (but can define distribution keys)  | JSON (simple, nested), CSV, TSV, and Apache logs | Users can create user-defined functions using an SQL SELECT clause or Python | Cluster-level security with support for encryption | High (by cluster & node) |
+Athena        |       Instant - no need to setup infrastucture (Serverless)       |       Presto       |     Faster than Redshift in simple SELECT or WHERE filter       |   Data partitions on Hive metastore correspond to folders on S3   | CSV, JSON (both simple and nested), Redshift Columnar Storage | Only supports scalar UDFs, built-in Presto functions | Relies on IAM; access to data based on S3 permissions; can read encrypted data from S3 | Low (by query scan) |
+
+Difference between EMR and Glue
+
+Service Name  |    Setup   | Job Environment  | Relation  | When to use for ETL job |
+--------------|:-------------|:-------------|:----------|:----------|
+EMR           |      Configure cluster        |       Open-source tools such as Apache Spark, Apache Hive, Apache HBase, Apache Flink, and Presto in Hadoop environment       |      Use the AWS Glue data catalog as a managed metadata repository for external table metadata for Apache Spark and Apache Hive     | Gives you direct access to the Hadoop environment, provides lower-level access, and greater flexibility in using tools other than Spark |
+Glue          |      No need (Serverless)        |       Spark       |      Glue data catalog can stand as metadata to be used by EMR    | Operates on top of the Apache Spark environment and simplifies the process of building and maintaining tasks by inferring, evolving, and monitoring your ETL tasks |
+
+***
 ### <span style="color:#007697"> Solving Big Data Problems on AWS </span>
 
 **What is your data problem?**
@@ -791,6 +814,9 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
     * about 30 mins
 * [Level 401 - Automate Amazon Redshift cluster creation](./cloudformation/redshift_lab_401/)
     * about 40 mins - 1 hr
+
+**More Labs**
+* [awslabs/aws-well-architected-labs](https://github.com/awslabs/aws-well-architected-labs)
 
 **Other Resources**
 * [AWS CloudFormation samples](https://docs.aws.amazon.com/en_us/AWSCloudFormation/latest/UserGuide/sample-templates-services-us-west-2.html)

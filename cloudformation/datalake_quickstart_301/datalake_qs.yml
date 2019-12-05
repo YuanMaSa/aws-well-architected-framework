@@ -33,6 +33,12 @@ Metadata:
         Parameters:
           - S3DataLakeBucketName
 
+      -
+        Label:
+          default: "SNS Email Target Configuration"
+        Parameters:
+          - SnsEmailTarget
+
     ParameterLabels:
 
       PrefixName:
@@ -62,18 +68,21 @@ Metadata:
       S3DataLakeBucketName:
         default: "S3 Data Lake Bucket Name"
 
+      SnsEmailTarget:
+        default: "SNS Email Target"
+
 
 Parameters:
 
   PrefixName:
-    Description: An environment name that will be prefixed to resource names
+    Description: An environment name that will be prefixed to resource names (only contain lowercase letters and numbers or underscore (_))
     Type: String
-    Default: dna
+    Default: dna_team
     AllowedPattern: ^[a-z0-9_.]+$
     ConstraintDescription: Malformed input-Parameter PrefixName must only contain lowercase letters and numbers or underscore (_)
 
   VpcCIDR:
-    Description: Please enter the IP range (CIDR notation) for the VPC of Batch Job
+    Description: Please enter the IP range (CIDR notation) for the VPC of Lab
     Type: String
     AllowedPattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))?$
     ConstraintDescription: Invalid CIDR format
@@ -123,10 +132,23 @@ Parameters:
   S3DataLakeBucketName:
     Description: Please enter a <UNIQUE> bucket name to create a data repository for S3
     Type: String
-    Default: ecv-data-lake-main01
+    Default: datalake-lab-bucket-ver6689
     AllowedPattern: ^[a-z0-9.-]+$
     ConstraintDescription: Malformed input-Parameter S3DataLakeBucket must be unique and only contain lowercase letters and numbers
 
+  SnsEmailTarget:
+    Description: Enter the Email address for the target of SNS notification
+    Type: String
+    Default: e.g.sam@ecloud6689.com
+    AllowedPattern: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$
+    ConstraintDescription: Malformed input-Parameter SnsEmailTarget must be a valid email format
+
+Conditions:
+  IsConfigureEmail:
+    Fn::Not:
+    - Fn::Equals:
+      - ''
+      - Ref: SnsEmailTarget
 
 Resources:
 
@@ -141,7 +163,7 @@ Resources:
         - Key: Name
           Value: !Ref PrefixName
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
   # IGW
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -150,7 +172,7 @@ Resources:
         - Key: Name
           Value: !Ref PrefixName
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # IGW Attachment
   InternetGatewayAttachment:
@@ -170,7 +192,7 @@ Resources:
         - Key: Name
           Value: !Sub ${PrefixName} Public Subnet (AZ1)
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -183,7 +205,7 @@ Resources:
         - Key: Name
           Value: !Sub ${PrefixName} Public Subnet (AZ2)
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -196,7 +218,7 @@ Resources:
         - Key: Name
           Value: !Sub ${PrefixName} Private Subnet (AZ1)
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -209,7 +231,7 @@ Resources:
         - Key: Name
           Value: !Sub ${PrefixName} Private Subnet (AZ2)
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # NAT Gateway EIP
   NatGatewayEIP:
@@ -228,7 +250,7 @@ Resources:
         - Key: Name
           Value: !Ref PrefixName
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # Route Table for public subnet
   PublicRouteTable:
@@ -239,7 +261,7 @@ Resources:
         - Key: Name
           Value: !Sub ${PrefixName} Public Routes
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # Route for public subnet
   DefaultPublicRoute:
@@ -273,7 +295,7 @@ Resources:
         - Key: Name
           Value: !Sub ${PrefixName} Private Routes (AZ1)
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # Route for private subnet 1
   DefaultPrivateRoute1:
@@ -299,7 +321,7 @@ Resources:
         - Key: Name
           Value: !Sub ${PrefixName} Private Routes (AZ2)
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # Route for private subnet 2
   DefaultPrivateRoute2:
@@ -325,7 +347,7 @@ Resources:
         - Key: Name
           Value: !Sub ${PrefixName} NACL (Public Subnets)
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # Default Inbound Rule for NACL of public subnets
   PublicNetworkAclEntryInbound:
@@ -374,7 +396,7 @@ Resources:
         - Key: Name
           Value: !Sub ${PrefixName} NACL (Private Subnets)
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # Default Inbound Rule for NACL of private subnets
   PrivateNetworkAclEntryInbound:
@@ -423,7 +445,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # Security Group Ingress
   SecurityGroupIngress:
@@ -436,6 +458,195 @@ Resources:
       ToPort: 65535
       SourceSecurityGroupId: !GetAtt VPCSecurityGroup.GroupId
       Description: "SG refer to itself"
+
+  # EMR Security Group
+  EMRMasterPrivateSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: EMR Master Private SG
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake Quickstart"
+
+  EMRSlavePrivateSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: EMR Slave Private SG
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake Quickstart"
+
+  EMRServiceAccessSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: EMR Service Access SG
+      VpcId: !Ref VPC
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake Quickstart"
+
+  EMRMasterPrivateSGIngress1:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRMasterPrivateSG
+    Properties:
+      GroupId: !Ref EMRMasterPrivateSG
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      SourceSecurityGroupId: !Ref EMRMasterPrivateSG
+
+  EMRMasterPrivateSGIngress2:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRMasterPrivateSG
+    Properties:
+      GroupId: !Ref EMRMasterPrivateSG
+      IpProtocol: tcp
+      FromPort: '0'
+      ToPort: '65535'
+      SourceSecurityGroupId: !Ref EMRMasterPrivateSG
+
+  EMRMasterPrivateSGIngress3:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRMasterPrivateSG
+    Properties:
+      GroupId: !Ref EMRMasterPrivateSG
+      IpProtocol: udp
+      FromPort: '0'
+      ToPort: '65535'
+      SourceSecurityGroupId: !Ref EMRMasterPrivateSG
+
+  EMRMasterPrivateSGIngress4:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRMasterPrivateSG
+    Properties:
+      GroupId: !Ref EMRMasterPrivateSG
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      SourceSecurityGroupId: !Ref EMRSlavePrivateSG
+
+  EMRMasterPrivateSGIngress5:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRMasterPrivateSG
+    Properties:
+      GroupId: !Ref EMRMasterPrivateSG
+      IpProtocol: tcp
+      FromPort: '0'
+      ToPort: '65535'
+      SourceSecurityGroupId: !Ref EMRSlavePrivateSG
+
+  EMRMasterPrivateSGIngress6:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRMasterPrivateSG
+    Properties:
+      GroupId: !Ref EMRMasterPrivateSG
+      IpProtocol: udp
+      FromPort: '0'
+      ToPort: '65535'
+      SourceSecurityGroupId: !Ref EMRSlavePrivateSG
+
+  EMRMasterPrivateSGIngress7:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRMasterPrivateSG
+    Properties:
+      GroupId: !Ref EMRMasterPrivateSG
+      IpProtocol: tcp
+      FromPort: '8443'
+      ToPort: '8443'
+      SourceSecurityGroupId: !Ref EMRServiceAccessSG
+
+  EMRSlavePrivateSGIngress1:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRSlavePrivateSG
+    Properties:
+      GroupId: !Ref EMRSlavePrivateSG
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      SourceSecurityGroupId: !Ref EMRSlavePrivateSG
+
+  EMRSlavePrivateSGIngress2:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRSlavePrivateSG
+    Properties:
+      GroupId: !Ref EMRSlavePrivateSG
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: '65535'
+      SourceSecurityGroupId: !Ref EMRSlavePrivateSG
+
+  EMRSlavePrivateSGIngress3:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRSlavePrivateSG
+    Properties:
+      GroupId: !Ref EMRSlavePrivateSG
+      IpProtocol: udp
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref EMRSlavePrivateSG
+
+  EMRSlavePrivateSGIngress4:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRSlavePrivateSG
+    Properties:
+      GroupId: !Ref EMRSlavePrivateSG
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      SourceSecurityGroupId: !Ref EMRMasterPrivateSG
+
+  EMRSlavePrivateSGIngress5:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRSlavePrivateSG
+    Properties:
+      GroupId: !Ref EMRSlavePrivateSG
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: '65535'
+      SourceSecurityGroupId: !Ref EMRMasterPrivateSG
+
+  EMRSlavePrivateSGIngress6:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRSlavePrivateSG
+    Properties:
+      GroupId: !Ref EMRSlavePrivateSG
+      IpProtocol: udp
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref EMRMasterPrivateSG
+
+  EMRSlavePrivateSGIngress7:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    DependsOn: EMRSlavePrivateSG
+    Properties:
+      GroupId: !Ref EMRSlavePrivateSG
+      IpProtocol: tcp
+      FromPort: '8443'
+      ToPort: '8443'
+      SourceSecurityGroupId: !Ref EMRServiceAccessSG
+
+  EMRServiceAccessSGEgress1:
+    Type: 'AWS::EC2::SecurityGroupEgress'
+    DependsOn: EMRServiceAccessSG
+    Properties:
+      GroupId: !Ref EMRServiceAccessSG
+      IpProtocol: tcp
+      FromPort: '8443'
+      ToPort: '8443'
+      SourceSecurityGroupId: !Ref EMRMasterPrivateSG
+
+  EMRServiceAccessSGEgress2:
+    Type: 'AWS::EC2::SecurityGroupEgress'
+    DependsOn: EMRServiceAccessSG
+    Properties:
+      GroupId: !Ref EMRServiceAccessSG
+      IpProtocol: tcp
+      FromPort: '8443'
+      ToPort: '8443'
+      SourceSecurityGroupId: !Ref EMRSlavePrivateSG
+
 
   # EC2 Instance
   Ec2Server:
@@ -452,13 +663,13 @@ Resources:
         - Key: "Name"
           Value: !Sub '${PrefixName} Data Lake Server'
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          aws s3 cp s3://ecv-tutorial-preparation/spectrum_sample_data/ s3://${S3DataRepositoryBucket}/ --sse --recursive --region ${AWS::Region}
-          aws glue start-crawler --name ${GlueCrawler} --region ${AWS::Region}
+          aws s3 sync s3://ecv-tutorial-preparation/spectrum_sample_data/Weather/ s3://${S3DataRepositoryBucket}/Weather/ --sse --region ${AWS::Region}
+          # aws glue start-crawler --name ${GlueCrawler} --region ${AWS::Region}
 
   # EC2 Profile
   EC2InstanceProfile:
@@ -492,7 +703,7 @@ Resources:
 
       Tags:
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # =============================S3 & Glue=============================
 
@@ -515,7 +726,7 @@ Resources:
       # Tagging
       Tags:
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
     DeletionPolicy: Delete # set <Retain> when production
 
   # Create a managed policy for S3 data repository and script access
@@ -569,7 +780,7 @@ Resources:
       Path: "/"
       Tags:
         - Key: "Project"
-          Value: "Data Lake quickstart"
+          Value: "Data Lake Quickstart"
 
   # Glue Database
   GlueDatabase:
@@ -578,7 +789,7 @@ Resources:
       DatabaseInput:
         Description: !Sub 'Glue database for ${PrefixName}'
         Name: !Sub '${PrefixName}_db'
-        Parameters: {"Project": "Data Lake quickstart"}
+        Parameters: {"Project": "Data Lake Quickstart"}
       CatalogId: !Ref AWS::AccountId
 
   # Glue Crawler
@@ -593,7 +804,315 @@ Resources:
           - Path: !Sub '${S3DataRepositoryBucket}/'
       SchemaChangePolicy:
         UpdateBehavior: "UPDATE_IN_DATABASE"
-      Tags: {"Project": "Data Lake quickstart"}
+      Tags: {"Project": "Data Lake Quickstart"}
+
+  # SNS Topic for Job Alert
+  SnsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Sub '<${PrefixName}> Lab Messenger'
+      Subscription:
+        - Endpoint: !If [IsConfigureEmail, !Ref SnsEmailTarget, !Ref "AWS::NoValue"]
+          Protocol: !If [IsConfigureEmail, email, !Ref "AWS::NoValue"]
+      TopicName: !Sub '${PrefixName}_Job_Notification'
+
+  # Lambda Role
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonElasticMapReduceFullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+        - arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+        - Ref: S3DataRepositoryPolicy
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake Quickstart"
+
+
+  # Lambda Layer
+  RequestLayer:
+    Type: "AWS::Lambda::LayerVersion"
+    Properties:
+      CompatibleRuntimes:
+        - python3.7
+      Content:
+        S3Bucket: ecv-dna-lab-datalake-qs
+        S3Key: lambda/requests_module.zip
+      Description: Requests layer
+      LayerName: requests-layer
+      LicenseInfo: MIT
+
+  # Lambda Layer
+  Boto3Layer:
+    Type: "AWS::Lambda::LayerVersion"
+    Properties:
+      CompatibleRuntimes:
+        - python3.7
+      Content:
+        S3Bucket: ecv-dna-lab-datalake-qs
+        S3Key: lambda/boto3_latest.zip
+      Description: Latest boto3 layer
+      LayerName: latest-boto3-layer
+      LicenseInfo: MIT
+
+  # Lambda Function
+  InitFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${PrefixName}_cfn_init'
+      Handler: cfn_init_function.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: python3.7
+      Description: A Handler for initial job
+      Timeout: 300
+      Layers:
+        - !Ref RequestLayer
+        - !Ref Boto3Layer
+      Code:
+        # Choose your script in a specific S3 bucket.
+        S3Bucket: ecv-dna-lab-datalake-qs
+        S3Key: lambda/cfn_init_function.zip
+      Environment:
+        Variables:
+          Prefix: !Ref PrefixName
+          S3DataRepoName: !Ref S3DataLakeBucketName
+          SnsTopic: !Ref SnsTopic
+          StateMachineArn: !Ref EMRStateMachine
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake Quickstart"
+
+  # Lambda Function
+  ExecEmrFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${PrefixName}_emr_jobflow'
+      Handler: emr_run_jobflow.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: python3.7
+      Description: A Handler for EMR job execution
+      Timeout: 300
+      Layers:
+        - !Ref RequestLayer
+        - !Ref Boto3Layer
+      Code:
+        # Choose your script in a specific S3 bucket.
+        S3Bucket: ecv-dna-lab-datalake-qs
+        S3Key: lambda/emr_run_jobflow.zip
+      Environment:
+        Variables:
+          Prefix: !Ref PrefixName
+          S3DataRepoName: !Ref S3DataLakeBucketName
+          SnsTopic: !Ref SnsTopic
+          SubnetId: !Ref PrivateSubnet2
+          LogUri: !Sub 's3://aws-logs-${AWS::AccountId}-ap-southeast-1/elasticmapreduce/'
+          LabBucket: ecv-dna-lab-datalake-qs
+          MasterSg: !Ref EMRMasterPrivateSG
+          SlaveSg: !Ref EMRSlavePrivateSG
+          ServiceAccessSg: !Ref EMRServiceAccessSG
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake Quickstart"
+
+  # Lambda Function
+  GetStatusFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${PrefixName}_status_checker'
+      Handler: emr_cluster_status.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: python3.7
+      Description: A Handler to check the status of EMR cluster
+      Timeout: 300
+      Layers:
+        - !Ref RequestLayer
+        - !Ref Boto3Layer
+      Code:
+        # Choose your script in a specific S3 bucket.
+        S3Bucket: ecv-dna-lab-datalake-qs
+        S3Key: lambda/emr_cluster_status.zip
+      Environment:
+        Variables:
+          Prefix: !Ref PrefixName
+          S3DataRepoName: !Ref S3DataLakeBucketName
+          SnsTopic: !Ref SnsTopic
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake Quickstart"
+
+  # Lambda Function
+  CompleteFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${PrefixName}_complete_monitor'
+      Handler: job_complete_monitor.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: python3.7
+      Description: A Handler to check if the task is completed
+      Timeout: 300
+      Layers:
+        - !Ref RequestLayer
+        - !Ref Boto3Layer
+      Code:
+        # Choose your script in a specific S3 bucket.
+        S3Bucket: ecv-dna-lab-datalake-qs
+        S3Key: lambda/job_complete_monitor.zip
+      Environment:
+        Variables:
+          Prefix: !Ref PrefixName
+          S3DataRepoName: !Ref S3DataLakeBucketName
+          SnsTopic: !Ref SnsTopic
+          GlueCrawlerName: !Ref GlueCrawler
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake Quickstart"
+
+  # Custom Resource
+  CustomResource:
+    DependsOn: EMRStateMachine
+    Type: Custom::LambdaCrossStackRef
+    Properties:
+      ServiceToken:
+        !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${InitFunction}
+      StackName: "DataLakeQs"
+
+  # Step Function Role
+  StateMachineLambdaInvokeRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'StateMachineLambdInvokeRole'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - !Sub 'states.${AWS::Region}.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'lambda:InvokeFunction'
+                Resource: '*'
+
+  # Step Function State Machine
+  EMRStateMachine:
+    DependsOn: Ec2Server
+    Type: "AWS::StepFunctions::StateMachine"
+    Properties:
+      DefinitionString:
+        !Sub
+          - |-
+            {
+              "Comment": "A state machine that creates an EMR Cluster, checks its status, submits a step to the cluster, monitors the Step until it completes.",
+              "StartAt": "Create EMR Cluster Run Step",
+              "States": {
+                  "Create EMR Cluster Run Step": {
+                      "Type": "Task",
+                      "Resource": "${RunEmrLambdaArn}",
+                      "ResultPath": "$.emrInfo",
+                      "Next": "Wait for CreateEMRCluster job to complete"
+                  },
+                  "Wait for CreateEMRCluster job to complete": {
+                      "Type": "Wait",
+                      "Seconds": 300,
+                      "Next": "Check EMR cluster status"
+                  },
+                  "Check EMR cluster status": {
+                      "Type": "Task",
+                      "Resource": "${GetEmrStatusLambdaArn}",
+                      "Next": "EMR cluster is running?",
+                      "ResultPath": "$.clusterStatus"
+                  },
+                  "EMR cluster is running?": {
+                      "Type": "Choice",
+                      "Choices": [
+                          {
+                            "Variable": "$.clusterStatus",
+                            "StringEquals": "RUNNING",
+                            "Next": "Wait for EMR step to complete"
+                          },
+                          {
+                            "Variable": "$.clusterStatus",
+                            "StringEquals": "FAILED",
+                            "Next": "EMR cluster creation failed"
+                          }
+                      ],
+                      "Default": "Wait for EMR cluster running"
+                  },
+                  "EMR cluster creation failed": {
+                      "Type": "Fail",
+                      "Error": "Create EMR Cluster Run Step",
+                      "Cause": "CreateEMRClusterRunStep job did not complete successfully. Please check logs."
+                  },
+                  "Wait for EMR cluster running": {
+                      "Type": "Wait",
+                      "Seconds": 15,
+                      "Next": "Check EMR cluster status"
+                  },
+                  "Wait for EMR step to complete": {
+                      "Type": "Wait",
+                      "Seconds": 600,
+                      "Next": "Monitor EMR step"
+                  },
+                  "Monitor EMR step": {
+                      "Type": "Task",
+                      "Resource": "${CompleteLambdaArn}",
+                      "ResultPath": "$.jobStatus",
+                      "Next": "EMR step is complete?"
+                  },
+                  "EMR step is complete?": {
+                      "Type": "Choice",
+                      "Choices": [
+                          {
+                            "Variable": "$.jobStatus",
+                            "StringEquals": "OK",
+                            "Next": "EMR step run succeeded and task finished"
+                          },
+                          {
+                            "Variable": "$.jobStatus",
+                            "StringEquals": "FAILED",
+                            "Next": "EMR step run failed"
+                          }
+                      ],
+                      "Default": "Wait for EMR step complete"
+                  },
+                  "EMR step run failed": {
+                      "Type": "Fail",
+                      "Error": "Monitor EMR step",
+                      "Cause": "MonitorEMRstepjob have found error when running the step. Please check logs."
+                  },
+                  "Wait for EMR step complete" :{
+                      "Type": "Wait",
+                      "Seconds": 15,
+                      "Next": "Monitor EMR step"
+                  },
+                  "EMR step run succeeded and task finished": {
+                      "Type": "Pass",
+                      "End": true
+                  }
+                }
+              }
+          - {RunEmrLambdaArn: !GetAtt [ExecEmrFunction , Arn ], GetEmrStatusLambdaArn: !GetAtt [ GetStatusFunction, Arn ], CompleteLambdaArn: !GetAtt [ CompleteFunction, Arn ]}
+      RoleArn: !GetAtt StateMachineLambdaInvokeRole.Arn
+      Tags:
+        - Key: "Project"
+          Value: "Data Lake Quickstart"
 
 Outputs:
 
@@ -648,3 +1167,55 @@ Outputs:
   Ec2InstanceRole:
     Description: EC2 Instance Role
     Value: !Ref Ec2InstanceRole
+
+  AWSGlueServiceRole:
+    Description: Glue Service Role
+    Value: !Ref AWSGlueServiceRole
+
+  GlueDatabase:
+    Description: Glue database in data lake
+    Value: !Ref GlueDatabase
+
+  GlueCrawler:
+    Description: Glue crawler
+    Value: !Ref GlueCrawler
+
+  SnsTopic:
+    Description: SNS topic
+    Value: !Ref SnsTopic
+
+  LambdaRole:
+    Description: Lambda function role
+    Value: !Ref LambdaRole
+
+  RequestLayer:
+    Description: Request layer
+    Value: !Ref RequestLayer
+
+  Boto3Layer:
+    Description: Boto3 layer
+    Value: !Ref Boto3Layer
+
+  InitFunction:
+    Description: Initial Lambda function
+    Value: !Ref InitFunction
+
+  ExecEmrFunction:
+    Description: Lambda function to run EMR
+    Value: !Ref ExecEmrFunction
+
+  GetStatusFunction:
+    Description: Lambda function to check the EMR status
+    Value: !Ref GetStatusFunction
+
+  CompleteFunction:
+    Description: Lambda function to check if the task is completed
+    Value: !Ref CompleteFunction
+
+  CustomResource:
+    Description: Custom Resource of this stack
+    Value: !Ref CustomResource
+
+  EMRStateMachine:
+    Description: State machine for Step Function
+    Value: !Ref EMRStateMachine

@@ -138,6 +138,7 @@ For Redshift novice or lab quick starter
 Enter the name of following parameters
 * **Glue catalog database name** (e.g. ecvdb)
 * **Amazon S3 bucket for Redshift IAM role** (e.g., redshift-spectrum-bucket-ver6689)
+    * Make sure to enter a unique name to create the new bucket
 
 **Tag Identifiers**
 
@@ -385,7 +386,7 @@ Select **Query results** and choose **Visualize**
 
 ### Clean-Up Operation Procedures
 
-* Find the S3 BucketFor Redshift which was created by CloudFormation template.
+* Find the S3 Bucket for Redshift which was created by CloudFormation template.
     * (e.g., redshift-spectrum-bucket-ver6689)
 
 * Delete all object in the bucket and make sure the bucket is empty
