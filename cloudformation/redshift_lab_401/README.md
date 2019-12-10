@@ -370,6 +370,14 @@ You can use the following options to run the query
 
 *The sum of total pickup by Uber group by the humidity*
 
+    
+        select sum(uber_pickup) as uber_total_pickup, humidity
+        from lab_schema.agg_result
+        group by humidity
+        having uber_total_pickup > 100000
+        order by uber_total_pickup DESC
+    
+
 ![preview1.png](./img/preview1.png)
 
 Select **Query results** and choose **Visualize**
@@ -377,6 +385,13 @@ Select **Query results** and choose **Visualize**
 ![rs-viz.png](./img/rs-viz.png)
 
 *The sum of total pickup by Uber and Taxi group by the humidity*
+
+
+        select sum(uber_pickup) as uber_total_pickup, sum(taxi_pickup) as taxi_total_pickup, humidity
+        from lab_schema.agg_result
+        group by humidity
+        having uber_total_pickup > 100000 and taxi_total_pickup > 100000
+        order by humidity DESC
 
 ![preview2.png](./img/preview2.png)
 

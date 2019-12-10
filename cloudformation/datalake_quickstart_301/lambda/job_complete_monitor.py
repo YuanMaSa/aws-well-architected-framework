@@ -49,13 +49,12 @@ def lambda_handler(event, context):
 
         if emr_status == "WAITING":
             logger.info("Cluster run finished")
-            if get_datalake():
-                start = False
-                # wait until the crawler finish crawling
-                while not run_crawler(crawler_name, start):
-                    start = True
-                    sleep(1)
-                logger.info("Success to run Glue crawler to create Glue tables")
+            start = False
+            # wait until the crawler finish crawling
+            while not run_crawler(crawler_name, start):
+                start = True
+                sleep(1)
+            logger.info("Success to run Glue crawler to create Glue tables")
             # terminate the cluster and EMR workload
             emr.terminate_job_flows(
                 JobFlowIds=[event["emrInfo"]["jobFlowId"]]
@@ -79,22 +78,6 @@ def lambda_handler(event, context):
     except ClientError as err:
         logger.error("The error occurred when getting the status of EMR cluster")
         logger.exception(err)
-
-
-def get_datalake():
-    """
-    check the number of the folder in S3 data lake
-    """
-    data_exists = False
-    res = s3.list_objects_v2(Bucket=s3_data_repo)
-    target = list(map(lambda x: x['Key'].split("/")[0], res['Contents']))
-    folder_list = list(dict.fromkeys(target))
-    logger.info(f"List all the folder in S3 data repository\n{folder_list}")
-
-    if len(folder_list) in [2, 3]:
-        data_exists = True
-
-    return data_exists
 
 def run_crawler(glue_crawler, start):
     """

@@ -960,7 +960,7 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Runtime: python3.7
       Description: A Handler to check if the task is completed
-      Timeout: 300
+      Timeout: 600
       Layers:
         - !Ref RequestLayer
         - !Ref Boto3Layer
