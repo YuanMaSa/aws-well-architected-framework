@@ -810,7 +810,7 @@ AWS well-architected framework is always about the trade-offs; however, the fund
 
 * [Level 101 - VPC basic Configuration](./cloudformation/vpc_lab_101/)
     * about 10 mins
-* [Level 201 - ](./cloudformation/_lab_201/)
+* [Level 201 - Automate container creation](./cloudformation/container_lab_201/)
     * about 20 mins
 * [Level 301 - Data Lake Quick Start Template](./cloudformation/datalake_quickstart_lab_301/)
     * about 40 mins - 50 mins

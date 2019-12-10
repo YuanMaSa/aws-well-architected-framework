@@ -11,7 +11,7 @@ This lab using a Cloudformation Stack to generate the following items:
 
 **This lab would take you 40 mins to 50 mins to complete all the components and setting up the resources** 
 
-![DFG-Diagram-datalake_lab.png](./img/DFG-Diagram-datalake_lab.png)
+![Diagram-datalake_lab.png](./img/Diagram-datalake_lab.png)
 
 **This lab using the following datasets from Kaggle and NYC gov**
 * https://www.kaggle.com/selfishgene/historical-hourly-weather-data#city_attributes.csv
@@ -30,6 +30,8 @@ This lab using a Cloudformation Stack to generate the following items:
     * [How to create EC2 key pairs](https://docs.aws.amazon.com/zh_tw/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
 
 * Download the CloudFormation stack **datalake_qs.yml**
+
+* **Make sure to launch the CloudFormation stack in Singapore (ap-southeast-1) region**
 
 ### CloudFormation Deployment
 

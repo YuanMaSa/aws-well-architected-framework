@@ -916,7 +916,7 @@ Resources:
           S3DataRepoName: !Ref S3DataLakeBucketName
           SnsTopic: !Ref SnsTopic
           SubnetId: !Ref PrivateSubnet2
-          LogUri: !Sub 's3://aws-logs-${AWS::AccountId}-ap-southeast-1/elasticmapreduce/'
+          LogUri: !Sub 's3://aws-logs-${AWS::AccountId}-${AWS::Region}/elasticmapreduce/'
           LabBucket: ecv-dna-lab-datalake-qs
           MasterSg: !Ref EMRMasterPrivateSG
           SlaveSg: !Ref EMRSlavePrivateSG
