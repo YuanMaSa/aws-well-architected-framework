@@ -796,7 +796,9 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 
 ## Summary
 
+AWS well-architected framework is always about the trade-offs; however, the fundamental concept of five pillars is paramount imperative. It is comparable to the principal organ of the human
 
+![organ.png](./img/organ.png)
 
 
 ## Appendix: CloudFormation Labs
@@ -811,7 +813,7 @@ End to end stream processing and Extract, Transform and Load (ETL) design and im
 * [Level 201 - ](./cloudformation/_lab_201/)
     * about 20 mins
 * [Level 301 - Data Lake Quick Start Template](./cloudformation/datalake_quickstart_lab_301/)
-    * about 30 mins
+    * about 40 mins - 50 mins
 * [Level 401 - Automate Amazon Redshift cluster creation](./cloudformation/redshift_lab_401/)
     * about 40 mins - 1 hr
 

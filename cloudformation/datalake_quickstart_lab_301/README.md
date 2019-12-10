@@ -325,7 +325,7 @@ As illustrated in the preceding diagram, the workflow including
 
 ### Clean-Up Operation Procedures
 
-* Find the S3 Bucket for Redshift which was created by CloudFormation template.
+* Find the S3 Bucket for the data lake which was created by CloudFormation template.
     * (e.g., datalake-lab-bucket-ver6689)
 
 * Delete all object in the bucket and make sure the bucket is empty
