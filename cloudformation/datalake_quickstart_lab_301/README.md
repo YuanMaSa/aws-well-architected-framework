@@ -102,6 +102,8 @@ Enter your mail address to receive the notification
 
 ![latte.jpeg](./img/latte.jpeg)
 
+* Remember to confirm the subscription of **SNS** when receiving the subscription confirmation mail
+
 ***
 
 ![pending.png](./img/pending.png)
