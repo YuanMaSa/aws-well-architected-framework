@@ -105,6 +105,10 @@ Examine the new resources via console
 * Click **Jobs** on the left navigation panel
 * A job name **container_builder** will show up in one of those status tabs
 * For most of the cases, the job will be at **runnable** status for a while and then start running 
+* When the Batch job is starting to run, an EC2 instance will be launched on EC2 console
+
+![batch_instance.png](./img/batch_instance.png)
+
 * Wait for the job start to run and it will finish at **SUCCEEDED** status
 
 ![initial_job_done.png](./img/initial_job_done.png)
@@ -128,7 +132,7 @@ Examine the new resources via console
 * Click **Jobs** on the left navigation panel
 * Click **Submit job**
 * For **Job name**, enter your job name
-* For **Job definition**, select **Lab_Demo**
+* For **Job definition**, select **Lab_Demo** (job definition created by Lambda function)
 * for **Job queue**, select the queue that have been created by Cloudformation
 * And then click **Submit Job** at the bottom
 

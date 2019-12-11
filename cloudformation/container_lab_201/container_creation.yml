@@ -557,6 +557,7 @@ Resources:
         MaxvCpus: 64
         InstanceTypes:
           - optimal
+        Tags: {"Name" : "Private Batch Instance", "Project": "Container Lab"}
         Subnets:
           - Ref: PrivateSubnet1
           - Ref: PrivateSubnet2
