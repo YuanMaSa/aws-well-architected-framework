@@ -60,6 +60,9 @@ def lambda_handler(event, context):
                 JobFlowIds=[event["emrInfo"]["jobFlowId"]]
             )
             logger.info("Terminate the EMR jobflow")
+            message = "EMR job flow run SUCCEEDED and have been finished\n" + \
+                "The data has been output to S3 and create new Glue table"
+            sns.publish(Message=message, TopicArn=sns_topic)
 
             output = "OK"
 

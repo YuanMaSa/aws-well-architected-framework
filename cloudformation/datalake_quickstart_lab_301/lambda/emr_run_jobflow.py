@@ -16,6 +16,7 @@ logger.setLevel(logging.INFO)
 # aws api client
 s3 = boto3.client('s3')
 emr = boto3.client('emr')
+sns = boto3.client('sns')
 
 # load Environment Variables
 prefix_name = os.environ["Prefix"]
@@ -38,6 +39,10 @@ def lambda_handler(event, context):
     logger.info(f"event:\n{event}")
 
     res = emr_run_spark()
+    message = "Configure EMR cluster to run Spark job flow\n" + \
+        "EMR cluster is starting now"
+    sns.publish(Message=message, TopicArn=sns_topic)
+
     outer_info = fetch_emr_info(res["ClusterArn"])
     logger.info("fetch all the required values")
 
