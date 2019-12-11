@@ -1,6 +1,6 @@
 ## About this lab
 
-### Automate container creation in AWS ECR
+### Automate container creation on AWS
 
 This lab using a Cloudformation Stack to generate the following items:
 * A VPC to run Batch instance
@@ -24,7 +24,7 @@ This lab using a Cloudformation Stack to generate the following items:
 * On the service menu, click **CloudFormation**
 * For **Prepare template**, choose **Template is ready**
 * For **Specify template**, select **Upload a template file** and select **Choose file**.
-* Choose the **datalake_qs.yml**
+* Choose the **container_creation.yml**
 * Click **Next**
 * Enter the values in each Parameters and create the stack.
 

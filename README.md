@@ -810,12 +810,12 @@ AWS well-architected framework is always about the trade-offs; however, the fund
 
 * [Level 101 - VPC basic Configuration](./cloudformation/vpc_lab_101/)
     * about 10 mins
-* [Level 201 - Automate container creation](./cloudformation/container_lab_201/)
-    * about 20 mins
+* [Level 201 - Automate container creation on AWS](./cloudformation/container_lab_201/)
+    * about 10 mins - 20 mins
 * [Level 301 - Data Lake Quick Start Template](./cloudformation/datalake_quickstart_lab_301/)
     * about 40 mins - 50 mins
 * [Level 401 - Automate Amazon Redshift cluster creation](./cloudformation/redshift_lab_401/)
-    * about 40 mins - 1 hr
+    * about 40 mins - 60 mins
 
 **More Labs**
 * [awslabs/aws-well-architected-labs](https://github.com/awslabs/aws-well-architected-labs)

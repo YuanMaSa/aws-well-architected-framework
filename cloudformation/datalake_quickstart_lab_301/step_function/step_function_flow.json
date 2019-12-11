@@ -1,0 +1,88 @@
+{
+  "Comment": "A state machine that creates an EMR Cluster, checks its status, submits a step to the cluster, monitors the Step until it completes.",
+  "StartAt": "Create EMR Cluster Run Step",
+  "States": {
+    "Create EMR Cluster Run Step": {
+      "Type": "Task",
+      "Resource": "${RunEmrLambdaArn}",
+      "ResultPath": "$.emrInfo",
+      "Next": "Wait for CreateEMRCluster job to complete"
+    },
+    "Wait for CreateEMRCluster job to complete": {
+      "Type": "Wait",
+      "Seconds": 300,
+      "Next": "Check EMR cluster status"
+    },
+    "Check EMR cluster status": {
+      "Type": "Task",
+      "Resource": "${GetEmrStatusLambdaArn}",
+      "Next": "EMR cluster is running?",
+      "ResultPath": "$.clusterStatus"
+    },
+    "EMR cluster is running?": {
+      "Type": "Choice",
+      "Choices": [{
+          "Variable": "$.clusterStatus",
+          "StringEquals": "RUNNING",
+          "Next": "Wait for EMR step to complete"
+        },
+        {
+          "Variable": "$.clusterStatus",
+          "StringEquals": "FAILED",
+          "Next": "EMR cluster creation failed"
+        }
+      ],
+      "Default": "Wait for EMR cluster running"
+    },
+    "EMR cluster creation failed": {
+      "Type": "Fail",
+      "Error": "Create EMR Cluster Run Step",
+      "Cause": "CreateEMRClusterRunStep job did not complete successfully. Please check logs."
+    },
+    "Wait for EMR cluster running": {
+      "Type": "Wait",
+      "Seconds": 15,
+      "Next": "Check EMR cluster status"
+    },
+    "Wait for EMR step to complete": {
+      "Type": "Wait",
+      "Seconds": 600,
+      "Next": "Monitor EMR step"
+    },
+    "Monitor EMR step": {
+      "Type": "Task",
+      "Resource": "${CompleteLambdaArn}",
+      "ResultPath": "$.jobStatus",
+      "Next": "EMR step is complete?"
+    },
+    "EMR step is complete?": {
+      "Type": "Choice",
+      "Choices": [{
+          "Variable": "$.jobStatus",
+          "StringEquals": "OK",
+          "Next": "EMR step run succeeded and task finished"
+        },
+        {
+          "Variable": "$.jobStatus",
+          "StringEquals": "FAILED",
+          "Next": "EMR step run failed"
+        }
+      ],
+      "Default": "Wait for EMR step complete"
+    },
+    "EMR step run failed": {
+      "Type": "Fail",
+      "Error": "Monitor EMR step",
+      "Cause": "MonitorEMRstepjob have found error when running the step. Please check logs."
+    },
+    "Wait for EMR step complete": {
+      "Type": "Wait",
+      "Seconds": 15,
+      "Next": "Monitor EMR step"
+    },
+    "EMR step run succeeded and task finished": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}
