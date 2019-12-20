@@ -552,6 +552,7 @@ This section will introduce the AWS big data services and elucidate the best pra
 ![redshift_pa.png](./img/redshift_pa.png)
 
 * **Ideal Usage Patterns**
+
     Amazon Redshift is ideal for online analytical processing (OLAP) using your existing business intelligence tools. Organizations are using Amazon Redshift to:
     * Analyze global sales data for multiple products
     * Store historical stock trade data
